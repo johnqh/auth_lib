@@ -1,0 +1,213 @@
+/**
+ * @fileoverview Hook to provide a resilient network client with automatic token refresh and logout handling.
+ *
+ * - On 401 (Unauthorized): Force refresh Firebase token and retry once
+ * - On 403 (Forbidden): Log the user out
+ */
+
+import { useMemo } from 'react';
+import { getNetworkService } from '@sudobility/di';
+import { signOut } from 'firebase/auth';
+import type {
+  NetworkClient,
+  NetworkRequestOptions,
+  NetworkResponse,
+  Optional,
+} from '@sudobility/types';
+import { getFirebaseAuth } from '../config/firebase-init';
+import type { FirebaseAuthNetworkClientOptions } from '../config/types';
+
+/**
+ * Get a fresh Firebase ID token with force refresh.
+ * Returns empty string if not authenticated.
+ */
+async function getAuthToken(forceRefresh = false): Promise<string> {
+  const auth = getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user) return '';
+
+  try {
+    return await user.getIdToken(forceRefresh);
+  } catch (err) {
+    console.error(
+      '[useFirebaseAuthNetworkClient] Failed to get ID token:',
+      err
+    );
+    return '';
+  }
+}
+
+/**
+ * Log the user out via Firebase.
+ */
+async function logoutUser(onLogout?: () => void): Promise<void> {
+  const auth = getFirebaseAuth();
+  if (!auth) return;
+  try {
+    await signOut(auth);
+    onLogout?.();
+  } catch (err) {
+    console.error('[useFirebaseAuthNetworkClient] Failed to sign out:', err);
+  }
+}
+
+/**
+ * Create a network client adapter that wraps the platform network client
+ * with 401 retry and 403 logout handling.
+ */
+function createFirebaseAuthNetworkClient(
+  options?: FirebaseAuthNetworkClientOptions
+): NetworkClient {
+  const platformNetwork = getNetworkService();
+
+  const parseResponse = async <T>(
+    response: Response
+  ): Promise<NetworkResponse<T>> => {
+    let data: T | undefined;
+    const contentType = response.headers.get('content-type');
+
+    if (contentType?.includes('application/json')) {
+      try {
+        data = (await response.json()) as T;
+      } catch {
+        // JSON parse failed, leave data undefined
+      }
+    }
+
+    const headers: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+      data,
+      success: response.ok,
+      timestamp: new Date().toISOString(),
+    };
+  };
+
+  /**
+   * Execute request with retry logic:
+   * - On 401: Force refresh token and retry once
+   * - On 403: Log user out (no retry)
+   */
+  const executeWithRetry = async <T>(
+    url: string,
+    requestInit: RequestInit
+  ): Promise<NetworkResponse<T>> => {
+    const response = await platformNetwork.request(url, requestInit);
+
+    // On 401, get fresh token and retry once
+    if (response.status === 401) {
+      const freshToken = await getAuthToken(true);
+      if (freshToken) {
+        const retryHeaders = {
+          ...(requestInit.headers as Record<string, string>),
+          Authorization: `Bearer ${freshToken}`,
+        };
+        const retryResponse = await platformNetwork.request(url, {
+          ...requestInit,
+          headers: retryHeaders,
+        });
+        return parseResponse<T>(retryResponse);
+      } else {
+        // Token refresh failed
+        options?.onTokenRefreshFailed?.(new Error('Failed to refresh token'));
+      }
+    }
+
+    // On 403, log the user out
+    if (response.status === 403) {
+      console.warn(
+        '[useFirebaseAuthNetworkClient] 403 Forbidden - logging user out'
+      );
+      await logoutUser(options?.onLogout);
+      // Return the original response so the UI can handle it
+    }
+
+    return parseResponse<T>(response);
+  };
+
+  return {
+    async request<T>(
+      url: string,
+      reqOptions?: Optional<NetworkRequestOptions>
+    ): Promise<NetworkResponse<T>> {
+      const requestInit: RequestInit = {
+        method: reqOptions?.method ?? 'GET',
+        headers: reqOptions?.headers ?? undefined,
+        body: reqOptions?.body ?? undefined,
+        signal: reqOptions?.signal ?? undefined,
+      };
+      return executeWithRetry<T>(url, requestInit);
+    },
+
+    async get<T>(
+      url: string,
+      reqOptions?: Optional<Omit<NetworkRequestOptions, 'method' | 'body'>>
+    ): Promise<NetworkResponse<T>> {
+      const requestInit: RequestInit = {
+        method: 'GET',
+        headers: reqOptions?.headers ?? undefined,
+        signal: reqOptions?.signal ?? undefined,
+      };
+      return executeWithRetry<T>(url, requestInit);
+    },
+
+    async post<T>(
+      url: string,
+      body?: Optional<unknown>,
+      reqOptions?: Optional<Omit<NetworkRequestOptions, 'method'>>
+    ): Promise<NetworkResponse<T>> {
+      const requestInit: RequestInit = {
+        method: 'POST',
+        headers: reqOptions?.headers ?? undefined,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: reqOptions?.signal ?? undefined,
+      };
+      return executeWithRetry<T>(url, requestInit);
+    },
+
+    async put<T>(
+      url: string,
+      body?: Optional<unknown>,
+      reqOptions?: Optional<Omit<NetworkRequestOptions, 'method'>>
+    ): Promise<NetworkResponse<T>> {
+      const requestInit: RequestInit = {
+        method: 'PUT',
+        headers: reqOptions?.headers ?? undefined,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: reqOptions?.signal ?? undefined,
+      };
+      return executeWithRetry<T>(url, requestInit);
+    },
+
+    async delete<T>(
+      url: string,
+      reqOptions?: Optional<Omit<NetworkRequestOptions, 'method' | 'body'>>
+    ): Promise<NetworkResponse<T>> {
+      const requestInit: RequestInit = {
+        method: 'DELETE',
+        headers: reqOptions?.headers ?? undefined,
+        signal: reqOptions?.signal ?? undefined,
+      };
+      return executeWithRetry<T>(url, requestInit);
+    },
+  };
+}
+
+/**
+ * Hook to get a Firebase Auth network client with automatic 401 retry and 403 logout.
+ *
+ * @param options - Optional callbacks for logout and token refresh failure
+ * @returns NetworkClient instance
+ */
+export function useFirebaseAuthNetworkClient(
+  options?: FirebaseAuthNetworkClientOptions
+): NetworkClient {
+  return useMemo(() => createFirebaseAuthNetworkClient(options), [options]);
+}

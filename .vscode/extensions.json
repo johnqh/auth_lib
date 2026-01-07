@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // Prettier - Code formatter
+    "esbenp.prettier-vscode",
+
+    // ESLint - JavaScript/TypeScript linter
+    "dbaeumer.vscode-eslint",
+
+    // TypeScript and JavaScript language features
+    "ms-vscode.vscode-typescript-next",
+
+    // Better comments
+    "eamodio.gitlens",
+
+    // Path Intellisense
+    "christian-kohler.path-intellisense",
+
+    // Auto Close Tag
+    "formulahendry.auto-rename-tag",
+
+    // Bracket Pair Colorization
+    "usernamehw.errorlens"
+  ]
+}

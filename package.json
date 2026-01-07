@@ -1,0 +1,56 @@
+{
+  "name": "@sudobility/auth_lib",
+  "version": "0.0.1",
+  "description": "Firebase authentication utilities with token refresh handling",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "bunx eslint src",
+    "lint:fix": "bunx eslint src --fix",
+    "format": "bunx prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "firebase": "^12.0.0",
+    "@sudobility/di": "^1.5.8",
+    "@sudobility/types": "^1.9.40"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/bun": "^1.2.8",
+    "@types/react": "^19.2.5",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "~5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sudobility/auth_lib.git"
+  },
+  "license": "MIT"
+}
