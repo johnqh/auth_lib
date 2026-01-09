@@ -1,0 +1,98 @@
+# Auth Lib
+
+Firebase authentication utilities with token refresh handling for React applications.
+
+**npm**: `@sudobility/auth_lib` (public)
+
+## Tech Stack
+
+- **Language**: TypeScript
+- **Runtime**: Bun
+- **Build**: TypeScript compiler (tsc)
+- **Test**: bun:test
+- **Auth**: Firebase
+
+## Project Structure
+
+```
+src/
+├── index.ts          # Public exports
+├── config/           # Configuration types and utilities
+├── hooks/            # React hooks for auth
+│   └── useAuth.ts    # Main auth hook with token refresh
+└── utils/            # Utility functions
+    └── tokenRefresh.ts # Token refresh utilities
+```
+
+## Commands
+
+```bash
+bun run build        # Build to dist/
+bun run dev          # Watch mode build
+bun run clean        # Remove dist/
+bun test             # Run tests
+bun run typecheck    # TypeScript check
+bun run lint         # Run ESLint
+bun run lint:fix     # Fix lint issues
+bun run format       # Format with Prettier
+```
+
+## Key Features
+
+- Firebase auth token management
+- Automatic token refresh before expiry
+- React hooks for auth state
+- Network client integration with auto-retry on 401
+
+## Usage
+
+```typescript
+import { useAuth, AuthConfig } from '@sudobility/auth_lib';
+
+// Configure auth
+const config: AuthConfig = {
+  refreshThresholdMs: 5 * 60 * 1000, // Refresh 5 min before expiry
+};
+
+// In a React component
+const { user, token, isLoading, signIn, signOut } = useAuth(config);
+```
+
+## Peer Dependencies
+
+Required in consuming app:
+- `react` >= 19.0.0
+- `firebase` >= 12.0.0
+- `@sudobility/di` - Dependency injection
+- `@sudobility/types` - Common types
+
+## Publishing
+
+```bash
+bun run prepublishOnly  # Build
+npm publish             # Publish to npm
+```
+
+## Architecture
+
+```
+auth_lib (this package)
+    ↑
+shapeshyft_app (consumes auth)
+sudojo_app (consumes auth)
+```
+
+## Code Patterns
+
+### Token Refresh
+```typescript
+// Token is refreshed automatically when:
+// 1. Token is within threshold of expiry
+// 2. API returns 401 (triggers immediate refresh)
+// 3. App resumes from background
+```
+
+### Error Handling
+- Network errors: Retry with exponential backoff
+- Auth errors: Redirect to login
+- Token refresh failures: Sign out user
