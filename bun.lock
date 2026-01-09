@@ -16,8 +16,8 @@
         "typescript": "~5.9.3",
       },
       "peerDependencies": {
-        "@sudobility/di": "^1.5.16",
-        "@sudobility/types": "^1.9.42",
+        "@sudobility/di": "^1.5.17",
+        "@sudobility/types": "^1.9.43",
         "firebase": "^12.7.0",
         "react": "^19.2.3",
       },
