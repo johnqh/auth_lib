@@ -1,17 +1,17 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock firebase modules
 const mockApp = { name: '[DEFAULT]' };
 const mockAuth = { currentUser: null };
 
-mock.module('firebase/app', () => ({
-  initializeApp: mock(() => mockApp),
-  getApps: mock(() => []),
-  getApp: mock(() => mockApp),
+vi.mock('firebase/app', () => ({
+  initializeApp: vi.fn(() => mockApp),
+  getApps: vi.fn(() => []),
+  getApp: vi.fn(() => mockApp),
 }));
 
-mock.module('firebase/auth', () => ({
-  getAuth: mock(() => mockAuth),
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(() => mockAuth),
 }));
 
 // Import after mocking

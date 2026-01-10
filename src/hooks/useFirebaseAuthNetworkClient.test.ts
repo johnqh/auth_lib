@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock React
-mock.module('react', () => ({
-  useMemo: mock((fn: () => unknown) => fn()),
+vi.mock('react', () => ({
+  useMemo: vi.fn((fn: () => unknown) => fn()),
 }));
 
 // Mock firebase/auth
-mock.module('firebase/auth', () => ({
-  signOut: mock(() => Promise.resolve()),
+vi.mock('firebase/auth', () => ({
+  signOut: vi.fn(() => Promise.resolve()),
 }));
 
 // Mock @sudobility/di
-const mockRequest = mock(() =>
+const mockRequest = vi.fn(() =>
   Promise.resolve({
     ok: true,
     status: 200,
@@ -21,17 +21,17 @@ const mockRequest = mock(() =>
   })
 );
 
-mock.module('@sudobility/di', () => ({
-  getNetworkService: mock(() => ({
+vi.mock('@sudobility/di', () => ({
+  getNetworkService: vi.fn(() => ({
     request: mockRequest,
   })),
 }));
 
 // Mock firebase-init
-mock.module('../config/firebase-init', () => ({
-  getFirebaseAuth: mock(() => ({
+vi.mock('../config/firebase-init', () => ({
+  getFirebaseAuth: vi.fn(() => ({
     currentUser: {
-      getIdToken: mock(() => Promise.resolve('test-token')),
+      getIdToken: vi.fn(() => Promise.resolve('test-token')),
     },
   })),
 }));
@@ -56,8 +56,8 @@ describe('useFirebaseAuthNetworkClient', () => {
     });
 
     it('accepts options parameter', () => {
-      const onLogout = mock(() => {});
-      const onTokenRefreshFailed = mock(() => {});
+      const onLogout = vi.fn(() => {});
+      const onTokenRefreshFailed = vi.fn(() => {});
 
       const client = useFirebaseAuthNetworkClient({
         onLogout,

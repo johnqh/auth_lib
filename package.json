@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,7 +24,8 @@
     "lint": "bunx eslint src",
     "lint:fix": "bunx eslint src --fix",
     "format": "bunx prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
-    "test": "bun test",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
@@ -34,6 +35,7 @@
     "@sudobility/types": "^1.9.43"
   },
   "devDependencies": {
+    "vitest": "^4.0.4",
     "@eslint/js": "^9.0.0",
     "@types/bun": "^1.2.8",
     "@types/react": "^19.2.5",
