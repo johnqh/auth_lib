@@ -17,8 +17,8 @@
         "vitest": "^4.0.4",
       },
       "peerDependencies": {
-        "@sudobility/di": "^1.5.17",
-        "@sudobility/types": "^1.9.43",
+        "@sudobility/di": "^1.5.18",
+        "@sudobility/types": "^1.9.44",
         "firebase": "^12.7.0",
         "react": "^19.2.3",
       },

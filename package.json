@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -31,8 +31,8 @@
   "peerDependencies": {
     "react": "^19.2.3",
     "firebase": "^12.7.0",
-    "@sudobility/di": "^1.5.17",
-    "@sudobility/types": "^1.9.43"
+    "@sudobility/di": "^1.5.18",
+    "@sudobility/types": "^1.9.44"
   },
   "devDependencies": {
     "vitest": "^4.0.4",
