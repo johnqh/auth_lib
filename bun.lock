@@ -18,7 +18,7 @@
       },
       "peerDependencies": {
         "@sudobility/di": "^1.5.18",
-        "@sudobility/types": "^1.9.44",
+        "@sudobility/types": "^1.9.45",
         "firebase": "^12.7.0",
         "react": "^19.2.3",
       },
