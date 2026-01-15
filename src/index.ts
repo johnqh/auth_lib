@@ -33,3 +33,10 @@ export {
   formatFirebaseError,
   isFirebaseAuthError,
 } from './utils';
+
+// Admin
+export {
+  parseAdminEmails,
+  isAdminEmail,
+  createAdminChecker,
+} from './admin';

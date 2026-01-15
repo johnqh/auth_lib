@@ -17,6 +17,8 @@ Firebase authentication utilities with token refresh handling for React applicat
 ```
 src/
 ├── index.ts          # Public exports
+├── admin/            # Admin whitelist utilities
+│   └── admin-emails.ts # parseAdminEmails, isAdminEmail, createAdminChecker
 ├── config/           # Configuration types and utilities
 ├── hooks/            # React hooks for auth
 │   └── useAuth.ts    # Main auth hook with token refresh
@@ -43,6 +45,7 @@ bun run format       # Format with Prettier
 - Automatic token refresh before expiry
 - React hooks for auth state
 - Network client integration with auto-retry on 401
+- Admin email whitelist utilities
 
 ## Usage
 
@@ -96,3 +99,17 @@ sudojo_app (consumes auth)
 - Network errors: Retry with exponential backoff
 - Auth errors: Redirect to login
 - Token refresh failures: Sign out user
+
+### Admin Email Whitelist
+```typescript
+import { createAdminChecker } from '@sudobility/auth_lib';
+
+// Create checker once at startup
+const isAdmin = createAdminChecker(process.env.ADMIN_EMAILS);
+// ADMIN_EMAILS="admin@example.com,other@example.com"
+
+// In middleware:
+if (isAdmin(user.email)) {
+  // Bypass rate limiting, subscription checks, etc.
+}
+```
