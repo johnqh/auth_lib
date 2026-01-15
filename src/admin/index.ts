@@ -6,4 +6,4 @@ export {
   parseAdminEmails,
   isAdminEmail,
   createAdminChecker,
-} from "./admin-emails";
+} from './admin-emails';

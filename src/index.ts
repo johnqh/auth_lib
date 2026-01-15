@@ -35,8 +35,4 @@ export {
 } from './utils';
 
 // Admin
-export {
-  parseAdminEmails,
-  isAdminEmail,
-  createAdminChecker,
-} from './admin';
+export { parseAdminEmails, isAdminEmail, createAdminChecker } from './admin';

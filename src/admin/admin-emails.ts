@@ -23,9 +23,9 @@ export function parseAdminEmails(input: string | undefined | null): string[] {
   }
 
   return input
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter((email) => email.length > 0 && email.includes("@"));
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email.length > 0 && email.includes('@'));
 }
 
 /**

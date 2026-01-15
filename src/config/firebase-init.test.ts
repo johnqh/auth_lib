@@ -30,7 +30,6 @@ const validConfig = {
   appId: 'test-app-id',
 };
 
-
 describe('firebase-init', () => {
   // Note: Due to module singleton state, tests may affect each other
   // In a real scenario, you'd want to reset module state between tests
