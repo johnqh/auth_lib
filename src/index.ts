@@ -26,6 +26,14 @@ export type {
 // Hooks
 export { useFirebaseAuthNetworkClient } from './hooks';
 
+export {
+  useSiteAdmin,
+  siteAdminQueryKey,
+  type UseSiteAdminOptions,
+  type UseSiteAdminResult,
+  type UserInfoResponse,
+} from './hooks';
+
 // Utils
 export {
   getFirebaseErrorMessage,

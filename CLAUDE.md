@@ -68,6 +68,7 @@ Required in consuming app:
 - `firebase` >= 12.0.0
 - `@sudobility/di` - Dependency injection
 - `@sudobility/types` - Common types
+- `@tanstack/react-query` >= 5.0.0 - For useSiteAdmin hook
 
 ## Publishing
 
@@ -100,7 +101,25 @@ sudojo_app (consumes auth)
 - Auth errors: Redirect to login
 - Token refresh failures: Sign out user
 
-### Admin Email Whitelist
+### Site Admin Check (Recommended)
+```typescript
+import { useSiteAdmin } from '@sudobility/auth_lib';
+
+// In a React component - fetches from backend API
+const { isSiteAdmin, isLoading, userInfo } = useSiteAdmin({
+  networkClient,
+  baseUrl: 'https://api.example.com/api/v1',
+  userId: user?.uid,
+  token: idToken,
+});
+
+if (isLoading) return <Loading />;
+if (isSiteAdmin) {
+  // Show admin features
+}
+```
+
+### Admin Email Whitelist (Deprecated - use useSiteAdmin instead)
 ```typescript
 import { createAdminChecker } from '@sudobility/auth_lib';
 
