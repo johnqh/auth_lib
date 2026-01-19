@@ -1,14 +1,14 @@
 /**
- * @fileoverview Firebase-aware network service with automatic token refresh and logout handling.
+ * @fileoverview React Native Firebase-aware network service with automatic token refresh and logout handling.
  *
- * Extends WebNetworkService to add:
+ * Uses @react-native-firebase/auth for token management.
+ * Extends RNNetworkService to add:
  * - On 401 (Unauthorized): Force refresh Firebase token and retry once
  * - On 403 (Forbidden): Log the user out
  */
 
-import { WebNetworkService } from '@sudobility/di';
-import { signOut } from 'firebase/auth';
-import { getFirebaseAuth } from '../config/firebase-init';
+import { RNNetworkService } from '@sudobility/di/rn';
+import { getFirebaseAuth } from '../config/firebase-init.rn.js';
 
 export interface FirebaseAuthNetworkServiceOptions {
   /** Called when user is logged out due to 403 */
@@ -41,7 +41,7 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
   const auth = getFirebaseAuth();
   if (!auth) return;
   try {
-    await signOut(auth);
+    await auth.signOut();
     onLogout?.();
   } catch (err) {
     console.error('[FirebaseAuthNetworkService] Failed to sign out:', err);
@@ -49,10 +49,10 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
 }
 
 /**
- * Network service with Firebase authentication support.
+ * Network service with Firebase authentication support for React Native.
  * Automatically refreshes token on 401 and logs out on 403.
  */
-export class FirebaseAuthNetworkService extends WebNetworkService {
+export class FirebaseAuthNetworkService extends RNNetworkService {
   private serviceOptions: FirebaseAuthNetworkServiceOptions | undefined;
 
   constructor(options?: FirebaseAuthNetworkServiceOptions) {

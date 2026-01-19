@@ -145,10 +145,10 @@ export function createFirebaseAuthNetworkClient(
     ): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
         method: reqOptions?.method ?? 'GET',
-        headers: reqOptions?.headers ?? undefined,
-        body: reqOptions?.body ?? undefined,
-        signal: reqOptions?.signal ?? undefined,
       };
+      if (reqOptions?.headers) requestInit.headers = reqOptions.headers;
+      if (reqOptions?.body) requestInit.body = reqOptions.body;
+      if (reqOptions?.signal) requestInit.signal = reqOptions.signal;
       return executeWithRetry<T>(url, requestInit);
     },
 
@@ -158,9 +158,9 @@ export function createFirebaseAuthNetworkClient(
     ): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
         method: 'GET',
-        headers: reqOptions?.headers ?? undefined,
-        signal: reqOptions?.signal ?? undefined,
       };
+      if (reqOptions?.headers) requestInit.headers = reqOptions.headers;
+      if (reqOptions?.signal) requestInit.signal = reqOptions.signal;
       return executeWithRetry<T>(url, requestInit);
     },
 
@@ -171,10 +171,10 @@ export function createFirebaseAuthNetworkClient(
     ): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
         method: 'POST',
-        headers: reqOptions?.headers ?? undefined,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: reqOptions?.signal ?? undefined,
       };
+      if (reqOptions?.headers) requestInit.headers = reqOptions.headers;
+      if (body) requestInit.body = JSON.stringify(body);
+      if (reqOptions?.signal) requestInit.signal = reqOptions.signal;
       return executeWithRetry<T>(url, requestInit);
     },
 
@@ -185,10 +185,10 @@ export function createFirebaseAuthNetworkClient(
     ): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
         method: 'PUT',
-        headers: reqOptions?.headers ?? undefined,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: reqOptions?.signal ?? undefined,
       };
+      if (reqOptions?.headers) requestInit.headers = reqOptions.headers;
+      if (body) requestInit.body = JSON.stringify(body);
+      if (reqOptions?.signal) requestInit.signal = reqOptions.signal;
       return executeWithRetry<T>(url, requestInit);
     },
 
@@ -198,9 +198,9 @@ export function createFirebaseAuthNetworkClient(
     ): Promise<NetworkResponse<T>> {
       const requestInit: RequestInit = {
         method: 'DELETE',
-        headers: reqOptions?.headers ?? undefined,
-        signal: reqOptions?.signal ?? undefined,
       };
+      if (reqOptions?.headers) requestInit.headers = reqOptions.headers;
+      if (reqOptions?.signal) requestInit.signal = reqOptions.signal;
       return executeWithRetry<T>(url, requestInit);
     },
   };

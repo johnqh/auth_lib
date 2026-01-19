@@ -65,7 +65,7 @@ export function initializeFirebaseAuth(
   firebaseAuth = getAuth(firebaseApp);
 
   // Set up analytics user tracking on auth state changes
-  onAuthStateChanged(firebaseAuth, (user) => {
+  onAuthStateChanged(firebaseAuth, user => {
     try {
       const firebaseService = getFirebaseService();
       if (user) {
