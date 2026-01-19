@@ -59,7 +59,9 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
  * @param options - Optional callbacks for logout and token refresh failure
  */
 export function createFirebaseAuthNetworkClient(
-  platformNetwork?: { request: (url: string, options?: RequestInit) => Promise<Response> },
+  platformNetwork?: {
+    request: (url: string, options?: RequestInit) => Promise<Response>;
+  },
   options?: FirebaseAuthNetworkClientOptions
 ): NetworkClient {
   const network = platformNetwork ?? getNetworkService();
