@@ -3,7 +3,8 @@
  */
 
 import { type FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
-import { type Auth, getAuth } from 'firebase/auth';
+import { type Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirebaseService } from '@sudobility/di';
 import type {
   FirebaseConfig,
   FirebaseInitOptions,
@@ -62,6 +63,21 @@ export function initializeFirebaseAuth(
 
   // Initialize Firebase Auth
   firebaseAuth = getAuth(firebaseApp);
+
+  // Set up analytics user tracking on auth state changes
+  onAuthStateChanged(firebaseAuth, (user) => {
+    try {
+      const firebaseService = getFirebaseService();
+      if (user) {
+        // User signed in - set analytics user ID (will be hashed by the service)
+        firebaseService.analytics.setUserId(user.uid);
+      }
+      // Note: We don't clear user ID on sign out as Firebase Analytics
+      // handles this automatically and it helps with session continuity
+    } catch {
+      // Firebase service may not be initialized yet, ignore silently
+    }
+  });
 
   return { app: firebaseApp, auth: firebaseAuth };
 }

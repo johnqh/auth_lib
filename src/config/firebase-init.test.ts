@@ -12,6 +12,17 @@ vi.mock('firebase/app', () => ({
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => mockAuth),
+  onAuthStateChanged: vi.fn(() => () => {}), // Returns unsubscribe function
+}));
+
+// Mock DI module to avoid errors when getFirebaseService is called
+vi.mock('@sudobility/di', () => ({
+  getFirebaseService: vi.fn(() => ({
+    analytics: {
+      setUserId: vi.fn(),
+      isSupported: vi.fn(() => true),
+    },
+  })),
 }));
 
 // Import after mocking
