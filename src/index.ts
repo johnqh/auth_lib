@@ -42,5 +42,11 @@ export {
   isFirebaseAuthError,
 } from './utils';
 
+// Network
+export {
+  FirebaseAuthNetworkService,
+  type FirebaseAuthNetworkServiceOptions,
+} from './network';
+
 // Admin
 export { parseAdminEmails, isAdminEmail, createAdminChecker } from './admin';

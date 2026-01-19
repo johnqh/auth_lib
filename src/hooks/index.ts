@@ -2,7 +2,10 @@
  * @fileoverview Hooks exports
  */
 
-export { useFirebaseAuthNetworkClient } from './useFirebaseAuthNetworkClient';
+export {
+  useFirebaseAuthNetworkClient,
+  createFirebaseAuthNetworkClient,
+} from './useFirebaseAuthNetworkClient';
 
 export {
   useSiteAdmin,

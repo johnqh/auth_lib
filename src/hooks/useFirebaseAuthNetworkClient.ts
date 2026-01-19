@@ -52,13 +52,17 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
 }
 
 /**
- * Create a network client adapter that wraps the platform network client
+ * Create a network client adapter that wraps a platform network
  * with 401 retry and 403 logout handling.
+ *
+ * @param platformNetwork - The underlying network service to wrap (optional, defaults to getNetworkService())
+ * @param options - Optional callbacks for logout and token refresh failure
  */
-function createFirebaseAuthNetworkClient(
+export function createFirebaseAuthNetworkClient(
+  platformNetwork?: { request: (url: string, options?: RequestInit) => Promise<Response> },
   options?: FirebaseAuthNetworkClientOptions
 ): NetworkClient {
-  const platformNetwork = getNetworkService();
+  const network = platformNetwork ?? getNetworkService();
 
   const parseResponse = async <T>(
     response: Response
@@ -99,7 +103,7 @@ function createFirebaseAuthNetworkClient(
     url: string,
     requestInit: RequestInit
   ): Promise<NetworkResponse<T>> => {
-    const response = await platformNetwork.request(url, requestInit);
+    const response = await network.request(url, requestInit);
 
     // On 401, get fresh token and retry once
     if (response.status === 401) {
@@ -109,7 +113,7 @@ function createFirebaseAuthNetworkClient(
           ...(requestInit.headers as Record<string, string>),
           Authorization: `Bearer ${freshToken}`,
         };
-        const retryResponse = await platformNetwork.request(url, {
+        const retryResponse = await network.request(url, {
           ...requestInit,
           headers: retryHeaders,
         });
@@ -209,5 +213,8 @@ function createFirebaseAuthNetworkClient(
 export function useFirebaseAuthNetworkClient(
   options?: FirebaseAuthNetworkClientOptions
 ): NetworkClient {
-  return useMemo(() => createFirebaseAuthNetworkClient(options), [options]);
+  return useMemo(
+    () => createFirebaseAuthNetworkClient(undefined, options),
+    [options]
+  );
 }
