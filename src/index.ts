@@ -12,13 +12,10 @@ export {
   initializeFirebaseAuth,
   getFirebaseApp,
   getFirebaseAuth,
-  getFirebaseConfig,
   isFirebaseConfigured,
 } from './config';
 
 export type {
-  FirebaseConfig,
-  FirebaseInitOptions,
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,
 } from './config';

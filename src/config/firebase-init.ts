@@ -1,65 +1,50 @@
 /**
  * @fileoverview Configurable Firebase initialization
+ *
+ * Note: This module expects Firebase to be initialized by @sudobility/di_web
+ * before calling initializeFirebaseAuth(). It uses the existing Firebase app
+ * instance rather than creating a new one.
  */
 
-import { type FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
+import { type FirebaseApp, getApp, getApps } from 'firebase/app';
 import { type Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirebaseService } from '@sudobility/di';
-import type {
-  FirebaseConfig,
-  FirebaseInitOptions,
-  FirebaseInitResult,
-} from './types';
+import type { FirebaseInitResult } from './types';
 
 // Singleton state
 let firebaseApp: FirebaseApp | null = null;
 let firebaseAuth: Auth | null = null;
-let firebaseConfig: FirebaseConfig | null = null;
 
 /**
- * Check if Firebase is configured with the required fields
+ * Check if Firebase app is initialized
  */
 export function isFirebaseConfigured(): boolean {
-  if (!firebaseConfig) return false;
-  const requiredFields: (keyof FirebaseConfig)[] = [
-    'apiKey',
-    'authDomain',
-    'projectId',
-    'appId',
-  ];
-  return requiredFields.every(field => !!firebaseConfig?.[field]);
+  return getApps().length > 0;
 }
 
 /**
- * Initialize Firebase Auth with the provided configuration.
- * This should be called once at app startup (e.g., in main.tsx).
+ * Initialize Firebase Auth using the existing Firebase app.
  *
- * @param options - Firebase initialization options
+ * IMPORTANT: This requires Firebase to be initialized first by @sudobility/di_web.
+ * Call initializeWebApp() from di_web before calling this function.
+ *
  * @returns Firebase app and auth instances
- * @throws Error if Firebase is already initialized with different config
+ * @throws Error if Firebase app is not initialized
  */
-export function initializeFirebaseAuth(
-  options: FirebaseInitOptions
-): FirebaseInitResult {
-  const { config } = options;
-
-  // Store the config
-  firebaseConfig = config;
-
+export function initializeFirebaseAuth(): FirebaseInitResult {
   // Check if already initialized
   if (firebaseApp && firebaseAuth) {
     return { app: firebaseApp, auth: firebaseAuth };
   }
 
-  // Validate configuration
-  if (!isFirebaseConfigured()) {
+  // Get the existing Firebase app (initialized by di_web)
+  if (getApps().length === 0) {
     throw new Error(
-      '[auth_lib] Firebase configuration is incomplete. Required fields: apiKey, authDomain, projectId, appId'
+      '[auth_lib] Firebase app not initialized. Call initializeWebApp() from @sudobility/di_web first.'
     );
   }
 
-  // Initialize Firebase app (avoid duplicate initialization)
-  firebaseApp = getApps().length === 0 ? initializeApp(config) : getApp();
+  firebaseApp = getApp();
 
   // Initialize Firebase Auth
   firebaseAuth = getAuth(firebaseApp);
@@ -100,13 +85,4 @@ export function getFirebaseApp(): FirebaseApp | null {
  */
 export function getFirebaseAuth(): Auth | null {
   return firebaseAuth;
-}
-
-/**
- * Get the current Firebase configuration.
- *
- * @returns Firebase config or null if not initialized
- */
-export function getFirebaseConfig(): FirebaseConfig | null {
-  return firebaseConfig;
 }

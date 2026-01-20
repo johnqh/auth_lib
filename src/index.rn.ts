@@ -9,13 +9,10 @@ export {
   initializeFirebaseAuth,
   getFirebaseApp,
   getFirebaseAuth,
-  getFirebaseConfig,
   isFirebaseConfigured,
 } from './config/firebase-init.rn.js';
 
 export type {
-  FirebaseConfig,
-  FirebaseInitOptions,
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,
 } from './config/types.js';

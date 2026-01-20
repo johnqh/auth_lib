@@ -4,7 +4,7 @@
  */
 
 import { getFirebaseService } from '@sudobility/di';
-import type { FirebaseInitOptions, FirebaseInitResult } from './types.js';
+import type { FirebaseInitResult } from './types.js';
 
 // Types for lazy-loaded RN Firebase modules
 
@@ -58,15 +58,11 @@ export function isFirebaseConfigured(): boolean {
 
 /**
  * Initialize Firebase Auth for React Native.
- * Note: Firebase is configured via native files (google-services.json / GoogleService-Info.plist),
- * so the config param is optional and mainly for interface compatibility.
+ * Note: Firebase is configured via native files (google-services.json / GoogleService-Info.plist).
  *
- * @param options - Firebase initialization options (config is ignored in RN)
  * @returns Firebase app and auth instances
  */
-export function initializeFirebaseAuth(
-  _options?: FirebaseInitOptions
-): FirebaseInitResult {
+export function initializeFirebaseAuth(): FirebaseInitResult {
   // Get the RN Firebase modules
   const app = getAppModule();
   const auth = getAuthModule();
@@ -113,12 +109,4 @@ export function getFirebaseApp(): RNFirebaseApp | null {
  */
 export function getFirebaseAuth(): RNFirebaseAuth | null {
   return getAuthModule();
-}
-
-/**
- * Get the current Firebase configuration.
- * For RN, this returns null as config is in native files.
- */
-export function getFirebaseConfig(): null {
-  return null;
 }

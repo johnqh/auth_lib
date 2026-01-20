@@ -6,7 +6,7 @@ const mockAuth = { currentUser: null };
 
 vi.mock('firebase/app', () => ({
   initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+  getApps: vi.fn(() => [mockApp]), // Simulate di_web has already initialized Firebase
   getApp: vi.fn(() => mockApp),
 }));
 
@@ -29,7 +29,6 @@ vi.mock('@sudobility/di', () => ({
 import {
   getFirebaseApp,
   getFirebaseAuth,
-  getFirebaseConfig,
   initializeFirebaseAuth,
   isFirebaseConfigured,
 } from './firebase-init';
@@ -94,11 +93,4 @@ describe('firebase-init', () => {
     });
   });
 
-  describe('getFirebaseConfig', () => {
-    it('returns config after initialization', () => {
-      initializeFirebaseAuth({ config: validConfig });
-      const config = getFirebaseConfig();
-      expect(config).toEqual(validConfig);
-    });
-  });
 });

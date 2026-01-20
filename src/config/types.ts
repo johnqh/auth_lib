@@ -6,27 +6,6 @@ import type { Auth } from 'firebase/auth';
 import type { FirebaseApp } from 'firebase/app';
 
 /**
- * Firebase configuration object
- */
-export interface FirebaseConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket?: string;
-  messagingSenderId?: string;
-  appId: string;
-  measurementId?: string;
-}
-
-/**
- * Options for initializing Firebase Auth
- */
-export interface FirebaseInitOptions {
-  /** Firebase configuration */
-  config: FirebaseConfig;
-}
-
-/**
  * Result of Firebase initialization
  */
 export interface FirebaseInitResult {
