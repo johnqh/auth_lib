@@ -26,7 +26,7 @@ interface ApiResponse<T> {
 export interface UseSiteAdminOptions {
   /** Network client for making API requests */
   networkClient: NetworkClient;
-  /** Base URL of the API (e.g., "https://api.example.com/api/v1") */
+  /** Base URL of the API (e.g., "https://api.example.com") */
   baseUrl: string;
   /** Firebase user ID */
   userId: string | undefined;
@@ -72,7 +72,7 @@ export const siteAdminQueryKey = (userId: string) =>
  * ```tsx
  * const { isSiteAdmin, isLoading } = useSiteAdmin({
  *   networkClient,
- *   baseUrl: 'https://api.example.com/api/v1',
+ *   baseUrl: 'https://api.example.com',
  *   userId: user?.uid,
  *   token: idToken,
  * });
@@ -100,7 +100,7 @@ export function useSiteAdmin(options: UseSiteAdminOptions): UseSiteAdminResult {
         return null;
       }
 
-      const url = `${baseUrl}/users/${userId}`;
+      const url = `${baseUrl}/api/v1/users/${userId}`;
       const response = await networkClient.get<ApiResponse<UserInfoResponse>>(
         url,
         {
