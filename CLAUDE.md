@@ -9,19 +9,22 @@ Firebase authentication utilities with token refresh handling for React applicat
 - **Language**: TypeScript
 - **Runtime**: Bun
 - **Build**: TypeScript compiler (tsc)
-- **Test**: bun:test
+- **Test**: Vitest
 - **Auth**: Firebase
 
 ## Project Structure
 
 ```
 src/
-├── index.ts          # Public exports
+├── index.ts          # Public exports (web)
+├── index.rn.ts       # Public exports (React Native)
 ├── admin/            # Admin whitelist utilities
 │   └── admin-emails.ts # parseAdminEmails, isAdminEmail, createAdminChecker
 ├── config/           # Configuration types and utilities
 ├── hooks/            # React hooks for auth
 │   └── useAuth.ts    # Main auth hook with token refresh
+├── network/          # Network client utilities
+│   └── ...           # Auth-aware network client helpers
 └── utils/            # Utility functions
     └── tokenRefresh.ts # Token refresh utilities
 ```
