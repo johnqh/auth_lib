@@ -1,12 +1,13 @@
 /**
- * @fileoverview Firebase-aware network service with automatic token refresh and logout handling.
+ * @fileoverview Firebase-aware network client with automatic token refresh and logout handling.
  *
- * Extends WebNetworkService to add:
+ * Extends WebNetworkClient to add:
  * - On 401 (Unauthorized): Force refresh Firebase token and retry once
  * - On 403 (Forbidden): Log the user out
  */
 
-import { WebNetworkService } from '@sudobility/di';
+import { WebNetworkClient } from '@sudobility/di';
+import type { NetworkResponse, NetworkRequestOptions } from '@sudobility/types';
 import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-init';
 
@@ -49,10 +50,10 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
 }
 
 /**
- * Network service with Firebase authentication support.
- * Automatically refreshes token on 401 and logs out on 403.
+ * Network client with Firebase authentication support.
+ * Implements NetworkClient interface with automatic token refresh on 401 and logout on 403.
  */
-export class FirebaseAuthNetworkService extends WebNetworkService {
+export class FirebaseAuthNetworkService extends WebNetworkClient {
   private serviceOptions: FirebaseAuthNetworkServiceOptions | undefined;
 
   constructor(options?: FirebaseAuthNetworkServiceOptions) {
@@ -63,21 +64,21 @@ export class FirebaseAuthNetworkService extends WebNetworkService {
   /**
    * Override request to add 401 retry and 403 logout handling.
    */
-  override async request(
+  override async request<T = unknown>(
     url: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
-    const response = await super.request(url, options);
+    options: NetworkRequestOptions = {}
+  ): Promise<NetworkResponse<T>> {
+    const response = await super.request<T>(url, options);
 
     // On 401, get fresh token and retry once
     if (response.status === 401) {
       const freshToken = await getAuthToken(true);
       if (freshToken) {
         const retryHeaders = {
-          ...(options.headers as Record<string, string>),
+          ...options.headers,
           Authorization: `Bearer ${freshToken}`,
         };
-        return super.request(url, {
+        return super.request<T>(url, {
           ...options,
           headers: retryHeaders,
         });
