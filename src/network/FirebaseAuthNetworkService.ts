@@ -7,7 +7,7 @@
  */
 
 import { WebNetworkClient } from '@sudobility/di';
-import type { NetworkResponse, NetworkRequestOptions } from '@sudobility/types';
+import type { NetworkRequestOptions, NetworkResponse } from '@sudobility/types';
 import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-init';
 
