@@ -7,7 +7,7 @@
  * - On 403 (Forbidden): Log the user out
  */
 
-import { RNNetworkService } from '@sudobility/di/rn';
+import { RNNetworkService } from '@sudobility/di_rn';
 import { getFirebaseAuth } from '../config/firebase-init.rn.js';
 
 export interface FirebaseAuthNetworkServiceOptions {

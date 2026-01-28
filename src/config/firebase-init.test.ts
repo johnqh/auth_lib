@@ -16,7 +16,7 @@ vi.mock('firebase/auth', () => ({
 }));
 
 // Mock DI module to avoid errors when getFirebaseService is called
-vi.mock('@sudobility/di', () => ({
+vi.mock('@sudobility/di_web', () => ({
   getFirebaseService: vi.fn(() => ({
     analytics: {
       setUserId: vi.fn(),

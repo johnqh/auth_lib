@@ -3,7 +3,7 @@
  * Uses @react-native-firebase which is configured via native files
  */
 
-import { getFirebaseService } from '@sudobility/di';
+import { getAnalyticsClient } from '@sudobility/di_rn';
 import type { FirebaseInitResult } from './types.js';
 
 // Types for lazy-loaded RN Firebase modules
@@ -77,15 +77,15 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
   if (!initialized) {
     auth.onAuthStateChanged((user: { uid: string } | null) => {
       try {
-        const firebaseService = getFirebaseService();
+        const analyticsClient = getAnalyticsClient();
         if (user) {
           // User signed in - set analytics user ID (will be hashed by the service)
-          firebaseService.analytics.setUserId(user.uid);
+          analyticsClient.setUserId(user.uid);
         }
         // Note: We don't clear user ID on sign out as Firebase Analytics
         // handles this automatically and it helps with session continuity
       } catch {
-        // Firebase service may not be initialized yet, ignore silently
+        // Analytics client may not be initialized yet, ignore silently
       }
     });
     initialized = true;

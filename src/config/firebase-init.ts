@@ -8,7 +8,7 @@
 
 import { type FirebaseApp, getApp, getApps } from 'firebase/app';
 import { type Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirebaseService } from '@sudobility/di';
+import { getFirebaseService } from '@sudobility/di_web';
 import type { FirebaseInitResult } from './types';
 
 // Singleton state
