@@ -63,42 +63,54 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
   /**
    * Override request to add 401 retry and 403 logout handling.
+   * Note: WebNetworkClient throws NetworkError for non-OK responses,
+   * so we catch errors and check the status code.
    */
   override async request<T = unknown>(
     url: string,
     options: NetworkRequestOptions = {}
   ): Promise<NetworkResponse<T>> {
-    const response = await super.request<T>(url, options);
+    try {
+      return await super.request<T>(url, options);
+    } catch (error) {
+      // Check if this is a network error with a status code we handle
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        const networkError = error as { statusCode: number; message: string };
 
-    // On 401, get fresh token and retry once
-    if (response.status === 401) {
-      const freshToken = await getAuthToken(true);
-      if (freshToken) {
-        const retryHeaders = {
-          ...options.headers,
-          Authorization: `Bearer ${freshToken}`,
-        };
-        return super.request<T>(url, {
-          ...options,
-          headers: retryHeaders,
-        });
-      } else {
-        // Token refresh failed
-        this.serviceOptions?.onTokenRefreshFailed?.(
-          new Error('Failed to refresh token')
-        );
+        // On 401, get fresh token and retry once
+        if (networkError.statusCode === 401) {
+          console.log('[FirebaseAuthNetworkService] 401 received, attempting token refresh');
+          const freshToken = await getAuthToken(true);
+          if (freshToken) {
+            console.log('[FirebaseAuthNetworkService] Token refreshed, retrying request');
+            const retryHeaders = {
+              ...options.headers,
+              Authorization: `Bearer ${freshToken}`,
+            };
+            return super.request<T>(url, {
+              ...options,
+              headers: retryHeaders,
+            });
+          } else {
+            // Token refresh failed
+            console.error('[FirebaseAuthNetworkService] Token refresh failed - no token returned');
+            this.serviceOptions?.onTokenRefreshFailed?.(
+              new Error('Failed to refresh token')
+            );
+          }
+        }
+
+        // On 403, log the user out
+        if (networkError.statusCode === 403) {
+          console.warn(
+            '[FirebaseAuthNetworkService] 403 Forbidden - logging user out'
+          );
+          await logoutUser(this.serviceOptions?.onLogout);
+        }
       }
-    }
 
-    // On 403, log the user out
-    if (response.status === 403) {
-      console.warn(
-        '[FirebaseAuthNetworkService] 403 Forbidden - logging user out'
-      );
-      await logoutUser(this.serviceOptions?.onLogout);
-      // Return the original response so the UI can handle it
+      // Re-throw the original error
+      throw error;
     }
-
-    return response;
   }
 }
