@@ -79,10 +79,14 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
         // On 401, get fresh token and retry once
         if (networkError.statusCode === 401) {
-          console.log('[FirebaseAuthNetworkService] 401 received, attempting token refresh');
+          console.log(
+            '[FirebaseAuthNetworkService] 401 received, attempting token refresh'
+          );
           const freshToken = await getAuthToken(true);
           if (freshToken) {
-            console.log('[FirebaseAuthNetworkService] Token refreshed, retrying request');
+            console.log(
+              '[FirebaseAuthNetworkService] Token refreshed, retrying request'
+            );
             const retryHeaders = {
               ...options.headers,
               Authorization: `Bearer ${freshToken}`,
@@ -93,7 +97,9 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
             });
           } else {
             // Token refresh failed
-            console.error('[FirebaseAuthNetworkService] Token refresh failed - no token returned');
+            console.error(
+              '[FirebaseAuthNetworkService] Token refresh failed - no token returned'
+            );
             this.serviceOptions?.onTokenRefreshFailed?.(
               new Error('Failed to refresh token')
             );
