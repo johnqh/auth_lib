@@ -5,10 +5,10 @@
       "name": "@sudobility/auth_lib",
       "devDependencies": {
         "@eslint/js": "^9.0.0",
-        "@sudobility/di": "^1.5.30",
-        "@sudobility/di_rn": "^0.1.14",
-        "@sudobility/di_web": "^0.1.90",
-        "@sudobility/types": "^1.9.48",
+        "@sudobility/di": "^1.5.31",
+        "@sudobility/di_rn": "^0.1.16",
+        "@sudobility/di_web": "^0.1.91",
+        "@sudobility/types": "^1.9.49",
         "@tanstack/react-query": "^5.80.7",
         "@types/bun": "^1.2.8",
         "@types/node": "^22.0.0",
@@ -25,10 +25,10 @@
       "peerDependencies": {
         "@react-native-firebase/app": ">=18.0.0",
         "@react-native-firebase/auth": ">=18.0.0",
-        "@sudobility/di": "^1.5.30",
-        "@sudobility/di_rn": "^0.1.15",
-        "@sudobility/di_web": "^0.1.90",
-        "@sudobility/types": "^1.9.48",
+        "@sudobility/di": "^1.5.31",
+        "@sudobility/di_rn": "^0.1.16",
+        "@sudobility/di_web": "^0.1.91",
+        "@sudobility/types": "^1.9.49",
         "@tanstack/react-query": "^5.0.0",
         "firebase": "^12.7.0",
         "react": "^18.0.0 || ^19.0.0",
@@ -491,13 +491,13 @@
 
     "@sudobility/design": ["@sudobility/design@1.1.18", "", { "peerDependencies": { "clsx": ">=2.0.0", "tailwind-merge": ">=2.0.0" } }, "sha512-LAgViMJvlBJIykYAPqXohsTWZFHZPmWuU0tprhSoT5tVRWisQrqzjTEGMJ2nzYK23E+bb1F+F0W4ZV8jUB6cKA=="],
 
-    "@sudobility/di": ["@sudobility/di@1.5.30", "", { "peerDependencies": { "@notifee/react-native": ">=7.0.0", "@react-native-async-storage/async-storage": ">=1.19.0", "@react-native-community/netinfo": ">=9.0.0", "@sudobility/types": "^1.9.48", "react": ">=18.0.0", "react-native": ">=0.70.0" }, "optionalPeers": ["@notifee/react-native", "@react-native-async-storage/async-storage", "@react-native-community/netinfo", "react-native"] }, "sha512-oqPZGZErn7nJ2Z0Lpfn6fD0bGE6FEG7jQjZ4zH8qQGRcuk2hWes2Za7gv0KcOnd9SCCYc0WHHrrUG+Fee0qa+g=="],
+    "@sudobility/di": ["@sudobility/di@1.5.31", "", { "peerDependencies": { "@notifee/react-native": ">=7.0.0", "@react-native-async-storage/async-storage": ">=1.19.0", "@react-native-community/netinfo": ">=9.0.0", "@sudobility/types": "^1.9.49", "react": ">=18.0.0", "react-native": ">=0.70.0" }, "optionalPeers": ["@notifee/react-native", "@react-native-async-storage/async-storage", "@react-native-community/netinfo", "react-native"] }, "sha512-ntMkqsFsY07vbZHb31GmO1r7qXJRuyEmoXARojKdqn8pq0OSnZx73NaI3r8ye2V5g0lK72J6pEDvuzjTTyjo0g=="],
 
-    "@sudobility/di_rn": ["@sudobility/di_rn@0.1.14", "", { "peerDependencies": { "@sudobility/di": "^1.5.30", "@sudobility/types": "^1.9.48", "react": "^19.2.3", "react-native": "^0.83.1", "react-native-toast-message": "^2.3.3" } }, "sha512-DK3kvkHtloprnh8mapLzWfThjvtThLxCWuIQnrw95TzZGdpPf4cq1D+CuEddqXQqh/aQIKhEyzdXol7fewvP8Q=="],
+    "@sudobility/di_rn": ["@sudobility/di_rn@0.1.16", "", { "peerDependencies": { "@sudobility/di": "^1.5.31", "@sudobility/types": "^1.9.49", "react": "^19.2.3", "react-native": "^0.83.1", "react-native-toast-message": "^2.3.3" } }, "sha512-8EeJb+tpBwRnPN+KyDRPKThmkCmYWyUFqESsJh5HFMYBTOZkLycZz3m1Qdl8hh7Y0Mu6snAw2haJVAme6IIzcA=="],
 
-    "@sudobility/di_web": ["@sudobility/di_web@0.1.90", "", { "peerDependencies": { "@sudobility/components": "^5.0.1", "@sudobility/di": "^1.5.30", "@sudobility/types": "^1.9.48", "firebase": "^12.0.0", "react": "^18.0.0 || ^19.0.0" } }, "sha512-tEEejHY1seddMdAgLJq+a1M3kdWlmI4lpvD0f36dvtuxGhZDIa60XNhJCDhyZI3KU5BLVVGI0H++E0XA2lZ3MQ=="],
+    "@sudobility/di_web": ["@sudobility/di_web@0.1.91", "", { "peerDependencies": { "@sudobility/components": "^5.0.1", "@sudobility/di": "^1.5.31", "@sudobility/types": "^1.9.49", "firebase": "^12.0.0", "react": "^18.0.0 || ^19.0.0" } }, "sha512-/XRCnMwu2Emo/OveHPBAHG1A0gl3X8K53Toc/AiPIQqhtC0X8UpNWfJzwNYJDUUkv6yHHNKKv+dj+jh9Xg8rZA=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.48", "", {}, "sha512-sCXkeICtA//ftTDHdlLEcojVpOJi/ocvOmUYGh0S0eTl/tG5HWbOP4cz5aJz8jue4c2vYe/cJxj6BwtRlAOLEA=="],
+    "@sudobility/types": ["@sudobility/types@1.9.49", "", {}, "sha512-Gt8kaxnL5uWDsIAW1A6vKKvDUopb+q3QeyuUirVnT7yyqaMKXmcqvAGupvvZ/ATr2bOckcSPns/Bz3lRT1GVTg=="],
 
     "@tanstack/query-core": ["@tanstack/query-core@5.90.20", "", {}, "sha512-OMD2HLpNouXEfZJWcKeVKUgQ5n+n3A2JFmBaScpNDUqSrQSjiveC7dKMe53uJUg1nDG16ttFPz2xfilz6i2uVg=="],
 

@@ -73,12 +73,13 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
     try {
       return await super.request<T>(url, options);
     } catch (error) {
-      // Check if this is a network error with a status code we handle
-      if (error && typeof error === 'object' && 'statusCode' in error) {
-        const networkError = error as { statusCode: number; message: string };
+      // Check if this is a NetworkError with a status code we handle
+      // NetworkError from @sudobility/types has 'status' property (not 'statusCode')
+      if (error && typeof error === 'object' && 'status' in error) {
+        const networkError = error as { status: number; message: string };
 
         // On 401, get fresh token and retry once
-        if (networkError.statusCode === 401) {
+        if (networkError.status === 401) {
           console.log(
             '[FirebaseAuthNetworkService] 401 received, attempting token refresh'
           );
@@ -107,7 +108,7 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
         }
 
         // On 403, log the user out
-        if (networkError.statusCode === 403) {
+        if (networkError.status === 403) {
           console.warn(
             '[FirebaseAuthNetworkService] 403 Forbidden - logging user out'
           );
