@@ -24,11 +24,29 @@ export interface FirebaseAuthNetworkServiceOptions {
  */
 async function getAuthToken(forceRefresh = false): Promise<string> {
   const auth = getFirebaseAuth();
+  console.log('[FirebaseAuthNetworkService] getAuthToken called', {
+    forceRefresh,
+    hasAuth: !!auth,
+    hasCurrentUser: !!auth?.currentUser,
+    userEmail: auth?.currentUser?.email,
+  });
+
   const user = auth?.currentUser;
-  if (!user) return '';
+  if (!user) {
+    console.warn(
+      '[FirebaseAuthNetworkService] No currentUser - cannot get token'
+    );
+    return '';
+  }
 
   try {
-    return await user.getIdToken(forceRefresh);
+    const token = await user.getIdToken(forceRefresh);
+    console.log('[FirebaseAuthNetworkService] Got token', {
+      forceRefresh,
+      tokenLength: token?.length,
+      tokenPrefix: `${token?.substring(0, 20)}...`,
+    });
+    return token;
   } catch (err) {
     console.error('[FirebaseAuthNetworkService] Failed to get ID token:', err);
     return '';
@@ -70,9 +88,36 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
     url: string,
     options: NetworkRequestOptions = {}
   ): Promise<NetworkResponse<T>> {
+    // Debug: Log every request
+    const urlForLog = url.length > 100 ? `${url.substring(0, 100)}...` : url;
+    console.log('[FirebaseAuthNetworkService] request() called', {
+      url: urlForLog,
+      method: options.method || 'GET',
+      hasAuthHeader: !!options.headers?.Authorization,
+    });
+
     try {
-      return await super.request<T>(url, options);
+      const response = await super.request<T>(url, options);
+      console.log('[FirebaseAuthNetworkService] request() succeeded', {
+        url: urlForLog,
+        status: response.status,
+        ok: response.ok,
+      });
+      return response;
     } catch (error) {
+      // Debug: Log the caught error in detail
+      console.log('[FirebaseAuthNetworkService] request() caught error', {
+        url: urlForLog,
+        errorType: error?.constructor?.name,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        hasStatus: error && typeof error === 'object' && 'status' in error,
+        status:
+          error && typeof error === 'object' && 'status' in error
+            ? (error as { status: unknown }).status
+            : 'N/A',
+        errorKeys: error && typeof error === 'object' ? Object.keys(error) : [],
+      });
+
       // Check if this is a NetworkError with a status code we handle
       // NetworkError from @sudobility/types has 'status' property (not 'statusCode')
       if (error && typeof error === 'object' && 'status' in error) {
@@ -81,25 +126,41 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
         // On 401, get fresh token and retry once
         if (networkError.status === 401) {
           console.log(
-            '[FirebaseAuthNetworkService] 401 received, attempting token refresh'
+            '[FirebaseAuthNetworkService] 401 detected, attempting token refresh...'
           );
           const freshToken = await getAuthToken(true);
           if (freshToken) {
             console.log(
-              '[FirebaseAuthNetworkService] Token refreshed, retrying request'
+              '[FirebaseAuthNetworkService] Token refreshed successfully, retrying request...'
             );
             const retryHeaders = {
               ...options.headers,
               Authorization: `Bearer ${freshToken}`,
             };
-            return super.request<T>(url, {
-              ...options,
-              headers: retryHeaders,
-            });
+            try {
+              const retryResponse = await super.request<T>(url, {
+                ...options,
+                headers: retryHeaders,
+              });
+              console.log('[FirebaseAuthNetworkService] Retry succeeded!', {
+                status: retryResponse.status,
+                ok: retryResponse.ok,
+              });
+              return retryResponse;
+            } catch (retryError) {
+              console.error('[FirebaseAuthNetworkService] Retry also failed', {
+                errorType: retryError?.constructor?.name,
+                errorMessage:
+                  retryError instanceof Error
+                    ? retryError.message
+                    : String(retryError),
+              });
+              throw retryError;
+            }
           } else {
             // Token refresh failed
             console.error(
-              '[FirebaseAuthNetworkService] Token refresh failed - no token returned'
+              '[FirebaseAuthNetworkService] Token refresh failed - no token returned (empty string)'
             );
             this.serviceOptions?.onTokenRefreshFailed?.(
               new Error('Failed to refresh token')
@@ -114,9 +175,17 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
           );
           await logoutUser(this.serviceOptions?.onLogout);
         }
+      } else {
+        console.warn(
+          '[FirebaseAuthNetworkService] Error does not have status property, cannot handle',
+          {
+            errorType: error?.constructor?.name,
+          }
+        );
       }
 
       // Re-throw the original error
+      console.log('[FirebaseAuthNetworkService] Re-throwing original error');
       throw error;
     }
   }
