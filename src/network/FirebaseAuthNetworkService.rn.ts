@@ -28,8 +28,7 @@ async function getAuthToken(forceRefresh = false): Promise<string> {
 
   try {
     return await user.getIdToken(forceRefresh);
-  } catch (err) {
-    console.error('[FirebaseAuthNetworkService] Failed to get ID token:', err);
+  } catch {
     return '';
   }
 }
@@ -43,8 +42,8 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
   try {
     await auth.signOut();
     onLogout?.();
-  } catch (err) {
-    console.error('[FirebaseAuthNetworkService] Failed to sign out:', err);
+  } catch {
+    // Ignore sign out errors
   }
 }
 
@@ -91,9 +90,6 @@ export class FirebaseAuthNetworkService extends RNNetworkService {
 
     // On 403, log the user out
     if (response.status === 403) {
-      console.warn(
-        '[FirebaseAuthNetworkService] 403 Forbidden - logging user out'
-      );
       await logoutUser(this.serviceOptions?.onLogout);
       // Return the original response so the UI can handle it
     }
