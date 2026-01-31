@@ -1,14 +1,14 @@
 /**
  * @fileoverview Configurable Firebase initialization
  *
- * Note: This module expects Firebase to be initialized by @sudobility/di_web
+ * Note: This module expects Firebase to be initialized by @sudobility/di/web
  * before calling initializeFirebaseAuth(). It uses the existing Firebase app
  * instance rather than creating a new one.
  */
 
 import { type FirebaseApp, getApp, getApps } from 'firebase/app';
 import { type Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirebaseService } from '@sudobility/di_web';
+import { getFirebaseService } from '@sudobility/di/web';
 import type { FirebaseInitResult } from './types';
 
 // Singleton state
@@ -25,7 +25,7 @@ export function isFirebaseConfigured(): boolean {
 /**
  * Initialize Firebase Auth using the existing Firebase app.
  *
- * IMPORTANT: This requires Firebase to be initialized first by @sudobility/di_web.
+ * IMPORTANT: This requires Firebase to be initialized first by @sudobility/di/web.
  * Call initializeWebApp() from di_web before calling this function.
  *
  * @returns Firebase app and auth instances
@@ -37,7 +37,7 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
     return { app: firebaseApp, auth: firebaseAuth };
   }
 
-  // Get the existing Firebase app (initialized by di_web)
+  // Get the existing Firebase app (initialized by di/web)
   if (getApps().length === 0) {
     throw new Error(
       '[auth_lib] Firebase app not initialized. Call initializeWebApp() from @sudobility/di_web first.'

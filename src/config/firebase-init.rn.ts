@@ -3,7 +3,7 @@
  * Uses @react-native-firebase which is configured via native files
  */
 
-import { getAnalyticsClient } from '@sudobility/di_rn';
+import { getAnalyticsClient } from '@sudobility/di/rn';
 import type { FirebaseInitResult } from './types.js';
 
 // Types for lazy-loaded RN Firebase modules
