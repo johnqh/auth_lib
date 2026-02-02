@@ -11,25 +11,62 @@ import type { NetworkRequestOptions, NetworkResponse } from '@sudobility/types';
 import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-init';
 
+/** Default token refresh interval in milliseconds (30 seconds) */
+const DEFAULT_TOKEN_REFRESH_INTERVAL_MS = 30 * 1000;
+
 export interface FirebaseAuthNetworkServiceOptions {
   /** Called when user is logged out due to 403 */
   onLogout?: () => void;
   /** Called when token refresh fails */
   onTokenRefreshFailed?: (error: Error) => void;
+  /** Token refresh interval in milliseconds (default: 30 seconds) */
+  tokenRefreshIntervalMs?: number;
 }
 
+// Token cache for proactive refresh
+let cachedToken: string | null = null;
+let tokenTimestamp: number = 0;
+
 /**
- * Get a fresh Firebase ID token with force refresh.
+ * Get a Firebase ID token, refreshing if stale or forced.
  * Returns empty string if not authenticated.
+ *
+ * @param forceRefresh - Force refresh regardless of cache
+ * @param refreshIntervalMs - Consider token stale after this many milliseconds
  */
-async function getAuthToken(forceRefresh = false): Promise<string> {
+async function getAuthToken(
+  forceRefresh = false,
+  refreshIntervalMs = DEFAULT_TOKEN_REFRESH_INTERVAL_MS
+): Promise<string> {
   const auth = getFirebaseAuth();
   const user = auth?.currentUser;
-  if (!user) return '';
+  if (!user) {
+    console.error('[FirebaseAuthNetworkService] getAuthToken: No current user');
+    cachedToken = null;
+    tokenTimestamp = 0;
+    return '';
+  }
+
+  const now = Date.now();
+  const tokenAge = now - tokenTimestamp;
+  const isStale = tokenAge > refreshIntervalMs;
+
+  // Return cached token if valid and not forced refresh
+  if (!forceRefresh && !isStale && cachedToken) {
+    return cachedToken;
+  }
 
   try {
-    return await user.getIdToken(forceRefresh);
-  } catch {
+    // Force refresh if stale or explicitly requested
+    const shouldForceRefresh = forceRefresh || isStale;
+    const token = await user.getIdToken(shouldForceRefresh);
+    cachedToken = token;
+    tokenTimestamp = now;
+    return token;
+  } catch (error) {
+    console.error('[FirebaseAuthNetworkService] getAuthToken failed:', error);
+    cachedToken = null;
+    tokenTimestamp = 0;
     return '';
   }
 }
@@ -79,18 +116,26 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
         // On 401, get fresh token and retry once
         if (networkError.status === 401) {
+          console.error('[FirebaseAuthNetworkService] 401 Unauthorized, attempting token refresh');
           const freshToken = await getAuthToken(true);
           if (freshToken) {
+            console.error('[FirebaseAuthNetworkService] Token refreshed, retrying request');
             const retryHeaders = {
               ...options.headers,
               Authorization: `Bearer ${freshToken}`,
             };
-            return await super.request<T>(url, {
-              ...options,
-              headers: retryHeaders,
-            });
+            try {
+              return await super.request<T>(url, {
+                ...options,
+                headers: retryHeaders,
+              });
+            } catch (retryError) {
+              console.error('[FirebaseAuthNetworkService] Retry after token refresh failed:', retryError);
+              throw retryError;
+            }
           } else {
             // Token refresh failed
+            console.error('[FirebaseAuthNetworkService] Token refresh failed, no fresh token obtained');
             this.serviceOptions?.onTokenRefreshFailed?.(
               new Error('Failed to refresh token')
             );
@@ -99,8 +144,17 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
         // On 403, log the user out
         if (networkError.status === 403) {
+          console.error('[FirebaseAuthNetworkService] 403 Forbidden, logging user out');
           await logoutUser(this.serviceOptions?.onLogout);
         }
+
+        // Log other HTTP errors
+        if (networkError.status !== 401 && networkError.status !== 403) {
+          console.error(`[FirebaseAuthNetworkService] HTTP ${networkError.status}:`, networkError.message);
+        }
+      } else {
+        // Non-HTTP error (network failure, timeout, etc.)
+        console.error('[FirebaseAuthNetworkService] Network error:', error);
       }
 
       // Re-throw the original error
