@@ -116,10 +116,14 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
         // On 401, get fresh token and retry once
         if (networkError.status === 401) {
-          console.error('[FirebaseAuthNetworkService] 401 Unauthorized, attempting token refresh');
+          console.error(
+            '[FirebaseAuthNetworkService] 401 Unauthorized, attempting token refresh'
+          );
           const freshToken = await getAuthToken(true);
           if (freshToken) {
-            console.error('[FirebaseAuthNetworkService] Token refreshed, retrying request');
+            console.error(
+              '[FirebaseAuthNetworkService] Token refreshed, retrying request'
+            );
             const retryHeaders = {
               ...options.headers,
               Authorization: `Bearer ${freshToken}`,
@@ -130,12 +134,17 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
                 headers: retryHeaders,
               });
             } catch (retryError) {
-              console.error('[FirebaseAuthNetworkService] Retry after token refresh failed:', retryError);
+              console.error(
+                '[FirebaseAuthNetworkService] Retry after token refresh failed:',
+                retryError
+              );
               throw retryError;
             }
           } else {
             // Token refresh failed
-            console.error('[FirebaseAuthNetworkService] Token refresh failed, no fresh token obtained');
+            console.error(
+              '[FirebaseAuthNetworkService] Token refresh failed, no fresh token obtained'
+            );
             this.serviceOptions?.onTokenRefreshFailed?.(
               new Error('Failed to refresh token')
             );
@@ -144,13 +153,18 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
 
         // On 403, log the user out
         if (networkError.status === 403) {
-          console.error('[FirebaseAuthNetworkService] 403 Forbidden, logging user out');
+          console.error(
+            '[FirebaseAuthNetworkService] 403 Forbidden, logging user out'
+          );
           await logoutUser(this.serviceOptions?.onLogout);
         }
 
         // Log other HTTP errors
         if (networkError.status !== 401 && networkError.status !== 403) {
-          console.error(`[FirebaseAuthNetworkService] HTTP ${networkError.status}:`, networkError.message);
+          console.error(
+            `[FirebaseAuthNetworkService] HTTP ${networkError.status}:`,
+            networkError.message
+          );
         }
       } else {
         // Non-HTTP error (network failure, timeout, etc.)
