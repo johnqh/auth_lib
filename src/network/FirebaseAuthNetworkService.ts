@@ -69,7 +69,6 @@ async function getAuthToken(
   }
 }
 
-
 /**
  * Network client with Firebase authentication support.
  * Implements NetworkClient interface with automatic token refresh on 401.
