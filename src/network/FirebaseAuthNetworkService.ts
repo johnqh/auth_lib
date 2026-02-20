@@ -3,19 +3,17 @@
  *
  * Extends WebNetworkClient to add:
  * - On 401 (Unauthorized): Force refresh Firebase token and retry once
- * - On 403 (Forbidden): Log the user out
  */
 
 import { WebNetworkClient } from '@sudobility/di';
 import type { NetworkRequestOptions, NetworkResponse } from '@sudobility/types';
-import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-init';
 
 /** Default token refresh interval in milliseconds (30 seconds) */
 const DEFAULT_TOKEN_REFRESH_INTERVAL_MS = 30 * 1000;
 
 export interface FirebaseAuthNetworkServiceOptions {
-  /** Called when user is logged out due to 403 */
+  /** Called when user is logged out */
   onLogout?: () => void;
   /** Called when token refresh fails */
   onTokenRefreshFailed?: (error: Error) => void;
@@ -71,23 +69,10 @@ async function getAuthToken(
   }
 }
 
-/**
- * Log the user out via Firebase.
- */
-async function logoutUser(onLogout?: () => void): Promise<void> {
-  const auth = getFirebaseAuth();
-  if (!auth) return;
-  try {
-    await signOut(auth);
-    onLogout?.();
-  } catch {
-    // Ignore sign out errors
-  }
-}
 
 /**
  * Network client with Firebase authentication support.
- * Implements NetworkClient interface with automatic token refresh on 401 and logout on 403.
+ * Implements NetworkClient interface with automatic token refresh on 401.
  */
 export class FirebaseAuthNetworkService extends WebNetworkClient {
   private serviceOptions: FirebaseAuthNetworkServiceOptions | undefined;
@@ -98,7 +83,7 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
   }
 
   /**
-   * Override request to add 401 retry and 403 logout handling.
+   * Override request to add 401 retry with token refresh.
    * Note: WebNetworkClient throws NetworkError for non-OK responses,
    * so we catch errors and check the status code.
    */
@@ -151,16 +136,8 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
           }
         }
 
-        // On 403, log the user out
-        if (networkError.status === 403) {
-          console.error(
-            '[FirebaseAuthNetworkService] 403 Forbidden, logging user out'
-          );
-          await logoutUser(this.serviceOptions?.onLogout);
-        }
-
-        // Log other HTTP errors
-        if (networkError.status !== 401 && networkError.status !== 403) {
+        // Log other HTTP errors (403 is a permission error, not an auth error — don't log out)
+        if (networkError.status !== 401) {
           console.error(
             `[FirebaseAuthNetworkService] HTTP ${networkError.status}:`,
             networkError.message
