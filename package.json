@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.48",
+  "version": "0.0.49",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -53,8 +53,8 @@
     }
   },
   "devDependencies": {
-    "@sudobility/di": "^1.5.36",
-    "@sudobility/types": "^1.9.51",
+    "@sudobility/di": "^1.5.37",
+    "@sudobility/types": "^1.9.52",
     "@tanstack/react-query": "^5.80.7",
     "@types/node": "^22.0.0",
     "vitest": "^4.0.4",
