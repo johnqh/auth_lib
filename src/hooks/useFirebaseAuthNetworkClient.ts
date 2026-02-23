@@ -17,8 +17,24 @@ import type {
 import { getFirebaseAuth } from '../config/firebase-init';
 import type { FirebaseAuthNetworkClientOptions } from '../config/types';
 
+/** Token cache TTL in milliseconds (5 minutes) */
+const TOKEN_CACHE_TTL = 5 * 60 * 1000;
+
+// Module-level token cache
+let cachedToken: string | null = null;
+let cacheExpiry = 0;
+
 /**
- * Get a fresh Firebase ID token with force refresh.
+ * Invalidate the cached token, forcing the next request to fetch a fresh one.
+ */
+export function invalidateTokenCache(): void {
+  cachedToken = null;
+  cacheExpiry = 0;
+}
+
+/**
+ * Get a Firebase ID token, using cache when available.
+ * On force refresh, bypasses cache and updates it with the fresh token.
  * Returns empty string if not authenticated.
  */
 async function getAuthToken(forceRefresh = false): Promise<string> {
@@ -26,13 +42,22 @@ async function getAuthToken(forceRefresh = false): Promise<string> {
   const user = auth?.currentUser;
   if (!user) return '';
 
+  // Return cached token if valid and not forcing refresh
+  if (!forceRefresh && cachedToken && Date.now() < cacheExpiry) {
+    return cachedToken;
+  }
+
   try {
-    return await user.getIdToken(forceRefresh);
+    const token = await user.getIdToken(forceRefresh);
+    cachedToken = token;
+    cacheExpiry = Date.now() + TOKEN_CACHE_TTL;
+    return token;
   } catch (err) {
     console.error(
       '[useFirebaseAuthNetworkClient] Failed to get ID token:',
       err
     );
+    invalidateTokenCache();
     return '';
   }
 }
@@ -128,8 +153,9 @@ export function createFirebaseAuthNetworkClient(
     const authedInit = await injectAuthToken(requestInit);
     const response = await network.request(url, authedInit);
 
-    // On 401, get fresh token and retry once
+    // On 401, invalidate cache, get fresh token, and retry once
     if (response.status === 401) {
+      invalidateTokenCache();
       const freshToken = await getAuthToken(true);
       if (freshToken) {
         const retryHeaders = {

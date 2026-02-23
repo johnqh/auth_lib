@@ -19,7 +19,10 @@ export type {
 
 // Hooks - these are React hooks that work on both platforms
 // Note: useFirebaseAuthNetworkClient uses web-specific types, may need RN version
-export { useFirebaseAuthNetworkClient } from './hooks/index.js';
+export {
+  useFirebaseAuthNetworkClient,
+  createFirebaseAuthNetworkClient,
+} from './hooks/index.js';
 
 export {
   useSiteAdmin,

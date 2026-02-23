@@ -21,7 +21,10 @@ export type {
 } from './config';
 
 // Hooks
-export { useFirebaseAuthNetworkClient } from './hooks';
+export {
+  useFirebaseAuthNetworkClient,
+  createFirebaseAuthNetworkClient,
+} from './hooks';
 
 export {
   useSiteAdmin,

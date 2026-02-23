@@ -2,17 +2,17 @@
 
 ## Priority 1 - High Impact
 
-### 1. Export `createFirebaseAuthNetworkClient` from Top-Level
+### 1. Export `createFirebaseAuthNetworkClient` from Top-Level ✅ DONE
 - Currently only exported from `hooks/index.ts` barrel, not from the main `index.ts` or `index.rn.ts`
 - Non-hook consumers (e.g., singletons, config files) can't easily access the factory function
 - Add re-export to both entry points
 
-### 2. Add Token Caching to `createFirebaseAuthNetworkClient`
+### 2. Add Token Caching to `createFirebaseAuthNetworkClient` ✅ DONE
 - `FirebaseAuthNetworkService` has token caching with 5-min TTL
 - `createFirebaseAuthNetworkClient` calls `getIdToken()` on every request
 - Unify the caching strategy between the two implementations
 
-### 3. Increase Test Coverage
+### 3. Increase Test Coverage ✅ DONE
 - Add tests for 401 retry and 403 logout flows in `useFirebaseAuthNetworkClient`
 - Test `FirebaseAuthNetworkService` token refresh behavior
 - Test RN-specific initialization with `@react-native-firebase`

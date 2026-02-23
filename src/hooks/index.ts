@@ -5,6 +5,7 @@
 export {
   useFirebaseAuthNetworkClient,
   createFirebaseAuthNetworkClient,
+  invalidateTokenCache,
 } from './useFirebaseAuthNetworkClient';
 
 export {
