@@ -97,7 +97,27 @@ export function createFirebaseAuthNetworkClient(
   };
 
   /**
+   * Inject Firebase auth token into request headers if available and not already set.
+   */
+  const injectAuthToken = async (
+    requestInit: RequestInit
+  ): Promise<RequestInit> => {
+    const headers = (requestInit.headers as Record<string, string>) ?? {};
+    if (!headers['Authorization']) {
+      const token = await getAuthToken(false);
+      if (token) {
+        return {
+          ...requestInit,
+          headers: { ...headers, Authorization: `Bearer ${token}` },
+        };
+      }
+    }
+    return requestInit;
+  };
+
+  /**
    * Execute request with retry logic:
+   * - Auto-inject Firebase auth token on every request
    * - On 401: Force refresh token and retry once
    * - On 403: Log user out (no retry)
    */
@@ -105,7 +125,8 @@ export function createFirebaseAuthNetworkClient(
     url: string,
     requestInit: RequestInit
   ): Promise<NetworkResponse<T>> => {
-    const response = await network.request(url, requestInit);
+    const authedInit = await injectAuthToken(requestInit);
+    const response = await network.request(url, authedInit);
 
     // On 401, get fresh token and retry once
     if (response.status === 401) {

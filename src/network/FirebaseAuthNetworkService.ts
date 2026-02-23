@@ -82,7 +82,8 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
   }
 
   /**
-   * Override request to add 401 retry with token refresh.
+   * Override request to automatically inject Firebase auth token
+   * and add 401 retry with token refresh.
    * Note: WebNetworkClient throws NetworkError for non-OK responses,
    * so we catch errors and check the status code.
    */
@@ -90,8 +91,18 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
     url: string,
     options: NetworkRequestOptions = {}
   ): Promise<NetworkResponse<T>> {
+    // Auto-inject Firebase auth token if available and not already set
+    const headers = { ...options.headers };
+    if (!headers['Authorization']) {
+      const token = await getAuthToken(false);
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    const optionsWithAuth = { ...options, headers };
+
     try {
-      return await super.request<T>(url, options);
+      return await super.request<T>(url, optionsWithAuth);
     } catch (error) {
       // Check if this is a NetworkError with a status code we handle
       // NetworkError from @sudobility/types has 'status' property (not 'statusCode')
