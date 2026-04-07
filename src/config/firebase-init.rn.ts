@@ -17,6 +17,7 @@ let initialized = false;
 function getAuthModule(): any | null {
   if (!firebaseAuth) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getAuth } = require('@react-native-firebase/auth');
       firebaseAuth = getAuth();
     } catch (e) {
@@ -32,6 +33,7 @@ function getAuthModule(): any | null {
 function getAppModule(): any | null {
   if (!firebaseApp) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getApp } = require('@react-native-firebase/app');
       firebaseApp = getApp();
     } catch (e) {
@@ -67,6 +69,7 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
 
   // Set up analytics user tracking on auth state changes
   if (!initialized) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { onAuthStateChanged } = require('@react-native-firebase/auth');
     onAuthStateChanged(auth, (user: { uid: string } | null) => {
       try {
