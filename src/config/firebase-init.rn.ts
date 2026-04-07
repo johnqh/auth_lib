@@ -1,61 +1,24 @@
 /**
  * @fileoverview React Native Firebase initialization
- * Uses @react-native-firebase which is configured via native files
+ * Uses @react-native-firebase modular API configured via native files
  */
 
 import { getAnalyticsClient } from '@sudobility/di/rn';
 import type { FirebaseInitResult } from './types.js';
 
-// Types for lazy-loaded RN Firebase modules
-
-type RNFirebaseAuth = any;
-
-type RNFirebaseApp = any;
-
 // Module state
-let firebaseAuth: RNFirebaseAuth | null = null;
-let firebaseApp: RNFirebaseApp | null = null;
+let firebaseAuth: any | null = null;
+let firebaseApp: any | null = null;
 let initialized = false;
 
-function resolveFactory(
-  moduleRef: any,
-  fallbackMethod?: string
-): (() => any) | null {
-  if (!moduleRef) return null;
-
-  const defaultExport = moduleRef.default;
-  if (typeof defaultExport === 'function') {
-    return defaultExport;
-  }
-
-  if (
-    defaultExport &&
-    fallbackMethod &&
-    typeof defaultExport[fallbackMethod] === 'function'
-  ) {
-    return defaultExport[fallbackMethod].bind(defaultExport);
-  }
-
-  if (fallbackMethod && typeof moduleRef[fallbackMethod] === 'function') {
-    return moduleRef[fallbackMethod].bind(moduleRef);
-  }
-
-  return null;
-}
-
 /**
- * Lazily load @react-native-firebase/auth
+ * Lazily load @react-native-firebase/auth using modular API
  */
-function getAuthModule(): RNFirebaseAuth | null {
+function getAuthModule(): any | null {
   if (!firebaseAuth) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authModule = require('@react-native-firebase/auth');
-      const authFactory = resolveFactory(authModule, 'auth');
-      if (!authFactory) {
-        throw new Error('No callable Firebase Auth factory found on module');
-      }
-      firebaseAuth = authFactory();
+      const { getAuth } = require('@react-native-firebase/auth');
+      firebaseAuth = getAuth();
     } catch (e) {
       console.warn('[auth_lib] @react-native-firebase/auth not available:', e);
     }
@@ -64,15 +27,13 @@ function getAuthModule(): RNFirebaseAuth | null {
 }
 
 /**
- * Lazily load @react-native-firebase/app
+ * Lazily load @react-native-firebase/app using modular API
  */
-function getAppModule(): RNFirebaseApp | null {
+function getAppModule(): any | null {
   if (!firebaseApp) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const appModule = require('@react-native-firebase/app');
-      // Do not eagerly create an app instance; we only need module availability.
-      firebaseApp = appModule.default ?? appModule;
+      const { getApp } = require('@react-native-firebase/app');
+      firebaseApp = getApp();
     } catch (e) {
       console.warn('[auth_lib] @react-native-firebase/app not available:', e);
     }
@@ -106,7 +67,8 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
 
   // Set up analytics user tracking on auth state changes
   if (!initialized) {
-    auth.onAuthStateChanged((user: { uid: string } | null) => {
+    const { onAuthStateChanged } = require('@react-native-firebase/auth');
+    onAuthStateChanged(auth, (user: { uid: string } | null) => {
       try {
         const analyticsClient = getAnalyticsClient();
         if (user) {
@@ -130,7 +92,7 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
  * Get the Firebase app instance.
  * @returns Firebase app instance or null if not available
  */
-export function getFirebaseApp(): RNFirebaseApp | null {
+export function getFirebaseApp(): any | null {
   return getAppModule();
 }
 
@@ -138,6 +100,6 @@ export function getFirebaseApp(): RNFirebaseApp | null {
  * Get the Firebase auth instance.
  * @returns Firebase auth instance or null if not available
  */
-export function getFirebaseAuth(): RNFirebaseAuth | null {
+export function getFirebaseAuth(): any | null {
   return getAuthModule();
 }
