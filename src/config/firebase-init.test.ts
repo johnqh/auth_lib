@@ -92,5 +92,4 @@ describe('firebase-init', () => {
       expect(auth).not.toBeNull();
     });
   });
-
 });

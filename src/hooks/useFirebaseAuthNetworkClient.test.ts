@@ -347,9 +347,7 @@ describe('createFirebaseAuthNetworkClient', () => {
       const customRequest = vi
         .fn()
         .mockResolvedValueOnce(createMockResponse(401))
-        .mockResolvedValueOnce(
-          createMockResponse(200, { retried: true })
-        );
+        .mockResolvedValueOnce(createMockResponse(200, { retried: true }));
 
       mockGetIdToken
         .mockResolvedValueOnce('stale-token')
@@ -385,9 +383,7 @@ describe('createFirebaseAuthNetworkClient', () => {
 
       const response = await client.get('https://api.example.com/data');
 
-      expect(onTokenRefreshFailed).toHaveBeenCalledWith(
-        expect.any(Error)
-      );
+      expect(onTokenRefreshFailed).toHaveBeenCalledWith(expect.any(Error));
       // Returns the original 401 response
       expect(response.status).toBe(401);
     });
@@ -415,9 +411,7 @@ describe('createFirebaseAuthNetworkClient', () => {
       const response = await client.get('https://api.example.com/data');
 
       expect(response.status).toBe(401);
-      expect(onTokenRefreshFailed).toHaveBeenCalledWith(
-        expect.any(Error)
-      );
+      expect(onTokenRefreshFailed).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('invalidates token cache on 401', async () => {
@@ -425,9 +419,7 @@ describe('createFirebaseAuthNetworkClient', () => {
         .fn()
         .mockResolvedValueOnce(createMockResponse(200))
         .mockResolvedValueOnce(createMockResponse(401))
-        .mockResolvedValueOnce(
-          createMockResponse(200, { retried: true })
-        );
+        .mockResolvedValueOnce(createMockResponse(200, { retried: true }));
 
       mockGetIdToken
         .mockResolvedValueOnce('cached-token')
@@ -603,9 +595,7 @@ describe('createFirebaseAuthNetworkClient', () => {
     });
 
     it('does not cache token when getIdToken fails', async () => {
-      mockGetIdToken.mockRejectedValueOnce(
-        new Error('token error')
-      );
+      mockGetIdToken.mockRejectedValueOnce(new Error('token error'));
 
       const customRequest = vi.fn(() =>
         Promise.resolve(createMockResponse(200))
