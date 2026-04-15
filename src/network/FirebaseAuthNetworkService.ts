@@ -12,6 +12,9 @@ import { getFirebaseAuth } from '../config/firebase-init';
 /** Default token refresh interval in milliseconds (30 seconds) */
 const DEFAULT_TOKEN_REFRESH_INTERVAL_MS = 30 * 1000;
 
+/** Default request timeout in milliseconds (2 minutes) */
+const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
+
 export interface FirebaseAuthNetworkServiceOptions {
   /** Called when user is logged out */
   onLogout?: () => void;
@@ -19,6 +22,8 @@ export interface FirebaseAuthNetworkServiceOptions {
   onTokenRefreshFailed?: (error: Error) => void;
   /** Token refresh interval in milliseconds (default: 30 seconds) */
   tokenRefreshIntervalMs?: number;
+  /** Default request timeout in milliseconds (default: 120000) */
+  defaultTimeoutMs?: number;
 }
 
 // Token cache for proactive refresh
@@ -77,7 +82,7 @@ export class FirebaseAuthNetworkService extends WebNetworkClient {
   private serviceOptions: FirebaseAuthNetworkServiceOptions | undefined;
 
   constructor(options?: FirebaseAuthNetworkServiceOptions) {
-    super();
+    super(options?.defaultTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS);
     this.serviceOptions = options;
   }
 
