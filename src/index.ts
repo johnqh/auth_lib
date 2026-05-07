@@ -48,5 +48,8 @@ export {
   type FirebaseAuthNetworkServiceOptions,
 } from './network';
 
+// Account management
+export { deleteAccount, type DeleteAccountOptions } from './account';
+
 // Admin
 export { parseAdminEmails, isAdminEmail, createAdminChecker } from './admin';

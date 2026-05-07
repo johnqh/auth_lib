@@ -46,6 +46,12 @@ export {
   type FirebaseAuthNetworkServiceOptions,
 } from './network/FirebaseAuthNetworkService.rn.js';
 
+// Account management (RN version)
+export {
+  deleteAccount,
+  type DeleteAccountOptions,
+} from './account/deleteAccount.rn.js';
+
 // Admin - platform-agnostic
 export {
   parseAdminEmails,
