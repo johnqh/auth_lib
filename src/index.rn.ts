@@ -46,11 +46,8 @@ export {
   type FirebaseAuthNetworkServiceOptions,
 } from './network/FirebaseAuthNetworkService.rn.js';
 
-// Account management (RN version)
-export {
-  deleteAccount,
-  type DeleteAccountOptions,
-} from './account/deleteAccount.rn.js';
+// Account management
+export { deleteAccount, type DeleteAccountOptions } from './account/index.js';
 
 // Admin - platform-agnostic
 export {
