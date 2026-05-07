@@ -1,12 +1,11 @@
 /**
- * @fileoverview Account deletion for web (Firebase JS SDK).
+ * @fileoverview Account deletion — calls backend DELETE endpoint.
  *
- * Calls the backend DELETE endpoint, then signs out locally.
+ * Callers are responsible for signing out after deletion,
+ * using their platform-specific auth context.
  */
 
-import { signOut } from 'firebase/auth';
 import type { NetworkClient } from '@sudobility/types';
-import { getFirebaseAuth } from '../config/firebase-init';
 
 /** Options for the deleteAccount function */
 export interface DeleteAccountOptions {
@@ -34,7 +33,8 @@ interface ApiErrorResponse {
  *
  * 1. Calls DELETE /api/v1/users/:userId on the backend
  * 2. Backend checks subscription, marks account as deleted, revokes tokens, deletes Firebase user
- * 3. Signs out locally on success
+ *
+ * Callers must sign out after this succeeds.
  *
  * @throws Error if the backend rejects the request (e.g., active subscription)
  */
@@ -56,15 +56,5 @@ export async function deleteAccount(
     const message =
       response.data?.error ?? `Failed to delete account (${response.status})`;
     throw new Error(message);
-  }
-
-  // Sign out locally
-  const auth = getFirebaseAuth();
-  if (auth) {
-    try {
-      await signOut(auth);
-    } catch {
-      // Firebase user is already deleted on the server, ignore sign-out errors
-    }
   }
 }
