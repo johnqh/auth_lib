@@ -459,7 +459,6 @@ describe('createFirebaseAuthNetworkClient', () => {
 
       expect(mockSignOut).toHaveBeenCalled();
       expect(onLogout).toHaveBeenCalled();
-      // Returns the 403 response so UI can handle it
       expect(response.status).toBe(403);
       expect(response.ok).toBe(false);
     });
@@ -477,10 +476,8 @@ describe('createFirebaseAuthNetworkClient', () => {
         { onLogout }
       );
 
-      // Should not throw
       const response = await client.get('https://api.example.com/data');
       expect(response.status).toBe(403);
-      // onLogout should NOT be called since signOut threw
       expect(onLogout).not.toHaveBeenCalled();
     });
 
@@ -495,7 +492,6 @@ describe('createFirebaseAuthNetworkClient', () => {
 
       await client.get('https://api.example.com/data');
 
-      // Only one request, no retry
       expect(customRequest).toHaveBeenCalledTimes(1);
     });
 
@@ -512,10 +508,8 @@ describe('createFirebaseAuthNetworkClient', () => {
         { onLogout }
       );
 
-      // Should not throw
       const response = await client.get('https://api.example.com/data');
       expect(response.status).toBe(403);
-      // signOut should not be called since auth is null
       expect(mockSignOut).not.toHaveBeenCalled();
     });
   });

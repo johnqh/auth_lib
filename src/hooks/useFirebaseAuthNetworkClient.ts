@@ -173,13 +173,12 @@ export function createFirebaseAuthNetworkClient(
       }
     }
 
-    // On 403, log the user out
+    // On 403, log the user out (triggers anonymous re-auth via onAuthStateChanged)
     if (response.status === 403) {
       console.warn(
         '[useFirebaseAuthNetworkClient] 403 Forbidden - logging user out'
       );
       await logoutUser(options?.onLogout);
-      // Return the original response so the UI can handle it
     }
 
     return parseResponse<T>(response);
