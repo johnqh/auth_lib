@@ -106,3 +106,11 @@ export function getFirebaseApp(): any | null {
 export function getFirebaseAuth(): any | null {
   return getAuthModule();
 }
+
+/**
+ * Sign the user out (React Native: @react-native-firebase instance method).
+ * Platform-specific so callers stay SDK-agnostic.
+ */
+export async function firebaseSignOut(auth: any): Promise<void> {
+  await auth.signOut();
+}

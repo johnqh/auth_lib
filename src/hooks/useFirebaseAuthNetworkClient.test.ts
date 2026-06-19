@@ -5,11 +5,9 @@ vi.mock('react', () => ({
   useMemo: vi.fn((fn: () => unknown) => fn()),
 }));
 
-// Mock firebase/auth
+// Sign-out is abstracted behind firebase-init (firebaseSignOut) so the hook
+// stays SDK-agnostic across web / React Native.
 const mockSignOut = vi.fn(() => Promise.resolve());
-vi.mock('firebase/auth', () => ({
-  signOut: (...args: unknown[]) => mockSignOut(...args),
-}));
 
 // Mock @sudobility/di
 const mockRequest = vi.fn(() =>
@@ -38,6 +36,7 @@ const mockGetFirebaseAuth = vi.fn(() => ({
 
 vi.mock('../config/firebase-init', () => ({
   getFirebaseAuth: (...args: unknown[]) => mockGetFirebaseAuth(...args),
+  firebaseSignOut: (...args: unknown[]) => mockSignOut(...args),
 }));
 
 // Import after mocking

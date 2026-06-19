@@ -7,7 +7,7 @@
  */
 
 import { type FirebaseApp, getApp, getApps } from 'firebase/app';
-import { type Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
+import { type Auth, getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirebaseService } from '@sudobility/di/web';
 import type { FirebaseInitResult } from './types';
 
@@ -85,4 +85,12 @@ export function getFirebaseApp(): FirebaseApp | null {
  */
 export function getFirebaseAuth(): Auth | null {
   return firebaseAuth;
+}
+
+/**
+ * Sign the user out (web: Firebase JS SDK).
+ * Platform-specific so callers stay SDK-agnostic.
+ */
+export async function firebaseSignOut(auth: Auth): Promise<void> {
+  await signOut(auth);
 }

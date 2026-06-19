@@ -7,14 +7,13 @@
 
 import { useMemo } from 'react';
 import { getNetworkService } from '@sudobility/di';
-import { signOut } from 'firebase/auth';
 import type {
   NetworkClient,
   NetworkRequestOptions,
   NetworkResponse,
   Optional,
 } from '@sudobility/types';
-import { getFirebaseAuth } from '../config/firebase-init';
+import { firebaseSignOut, getFirebaseAuth } from '../config/firebase-init';
 import type { FirebaseAuthNetworkClientOptions } from '../config/types';
 
 /** Token cache TTL in milliseconds (5 minutes) */
@@ -69,7 +68,7 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
   const auth = getFirebaseAuth();
   if (!auth) return;
   try {
-    await signOut(auth);
+    await firebaseSignOut(auth);
     onLogout?.();
   } catch (err) {
     console.error('[useFirebaseAuthNetworkClient] Failed to sign out:', err);

@@ -17,8 +17,10 @@ export type {
   FirebaseAuthNetworkClientOptions,
 } from './config/types.js';
 
-// Hooks - these are React hooks that work on both platforms
-// Note: useFirebaseAuthNetworkClient uses web-specific types, may need RN version
+// Hooks - these are React hooks that work on both platforms.
+// useFirebaseAuthNetworkClient is platform-agnostic: it resolves the Firebase
+// auth/sign-out via firebase-init (.rn here) and the transport via
+// @sudobility/di (RN build), so it works with @react-native-firebase.
 export {
   useFirebaseAuthNetworkClient,
   createFirebaseAuthNetworkClient,
