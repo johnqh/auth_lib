@@ -10,7 +10,7 @@ export {
   getFirebaseApp,
   getFirebaseAuth,
   isFirebaseConfigured,
-} from './config/firebase-init.rn.js';
+} from './config/firebase-init.native.js';
 
 export type {
   FirebaseInitResult,
@@ -18,9 +18,10 @@ export type {
 } from './config/types.js';
 
 // Hooks - these are React hooks that work on both platforms.
-// useFirebaseAuthNetworkClient is platform-agnostic: it resolves the Firebase
-// auth/sign-out via firebase-init (.rn here) and the transport via
-// @sudobility/di (RN build), so it works with @react-native-firebase.
+// useFirebaseAuthNetworkClient imports firebase-init via a bare path; on React
+// Native bundlers (Metro) that resolves to firebase-init.native.ts (the
+// @react-native-firebase impl), and on web bundlers to firebase-init.ts. The
+// transport comes from @sudobility/di (RN build).
 export {
   useFirebaseAuthNetworkClient,
   createFirebaseAuthNetworkClient,

@@ -8,7 +8,7 @@
  */
 
 import { RNNetworkService } from '@sudobility/di/rn';
-import { getFirebaseAuth } from '../config/firebase-init.rn.js';
+import { getFirebaseAuth } from '../config/firebase-init.native.js';
 
 export interface FirebaseAuthNetworkServiceOptions {
   /** Called when user is logged out due to 403 */
