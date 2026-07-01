@@ -141,7 +141,17 @@ export function useFirebaseAuthNative(
     setIsLoading(true);
     try {
       const GoogleSignin = await cfg.getGoogleSignin();
-      if (cfg.googleNative) GoogleSignin.configure(cfg.googleNative);
+      // Pass only non-empty client ids. When omitted, the native SDK reads them
+      // from GoogleService-Info.plist (iOS) / google-services.json (Android);
+      // passing an empty string would override that and break configuration.
+      const googleConfig: { iosClientId?: string; webClientId?: string } = {};
+      if (cfg.googleNative?.iosClientId) {
+        googleConfig.iosClientId = cfg.googleNative.iosClientId;
+      }
+      if (cfg.googleNative?.webClientId) {
+        googleConfig.webClientId = cfg.googleNative.webClientId;
+      }
+      GoogleSignin.configure(googleConfig);
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (response.type === 'cancelled') return;
