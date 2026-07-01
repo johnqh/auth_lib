@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.80",
+  "version": "0.0.81",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,6 +14,18 @@
       },
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./oauth": {
+      "import": "./dist/oauth/index.js",
+      "types": "./dist/oauth/index.d.ts"
+    },
+    "./auth-js": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./auth-native": {
+      "import": "./dist/auth/index.rn.js",
+      "types": "./dist/auth/index.rn.d.ts"
     }
   },
   "files": [
