@@ -12,6 +12,7 @@ import './config/firebase-proxy-auto.native.js';
 
 export {
   installFirebaseProxy,
+  forceFirebaseProxy,
   disableFirebaseProxy,
   autoConfigureFirebaseProxy,
   isFirebaseReachable,

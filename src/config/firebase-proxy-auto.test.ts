@@ -171,6 +171,75 @@ describe('autoConfigureFirebaseProxy', () => {
     );
   });
 
+  it('keeps a forced proxy on even when the probe succeeds', async () => {
+    const mod = await freshModule();
+    stubTimezone('America/Los_Angeles');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 204 }))
+    );
+
+    mod.forceFirebaseProxy();
+    await expect(mod.autoConfigureFirebaseProxy()).resolves.toBe(true);
+    expect(mod.getFirebaseProxyOrigin()).toBe(
+      mod.DEFAULT_FIREBASE_PROXY_ORIGIN
+    );
+  });
+
+  it('keeps a proxy forced mid-probe on when the in-flight probe succeeds', async () => {
+    const mod = await freshModule();
+    stubTimezone('America/Los_Angeles');
+    let resolveProbe!: (value: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(resolve => (resolveProbe = resolve)))
+    );
+
+    const pending = mod.autoConfigureFirebaseProxy();
+    mod.forceFirebaseProxy('https://own.example.com');
+    resolveProbe(new Response(null, { status: 204 }));
+
+    await pending;
+    expect(mod.getFirebaseProxyOrigin()).toBe('https://own.example.com');
+  });
+
+  it('honors globalThis.__SUDOBILITY_FIREBASE_PROXY_FORCED = true without probing', async () => {
+    const mod = await freshModule();
+    stubTimezone('America/Los_Angeles');
+    vi.stubGlobal('__SUDOBILITY_FIREBASE_PROXY_FORCED', true);
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(mod.autoConfigureFirebaseProxy()).resolves.toBe(true);
+    expect(mod.getFirebaseProxyOrigin()).toBe(
+      mod.DEFAULT_FIREBASE_PROXY_ORIGIN
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses a string __SUDOBILITY_FIREBASE_PROXY_FORCED as the proxy origin', async () => {
+    const mod = await freshModule();
+    stubTimezone('America/Los_Angeles');
+    vi.stubGlobal(
+      '__SUDOBILITY_FIREBASE_PROXY_FORCED',
+      'https://own.example.com'
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 204 }))
+    );
+
+    await expect(mod.autoConfigureFirebaseProxy()).resolves.toBe(true);
+    expect(mod.getFirebaseProxyOrigin()).toBe('https://own.example.com');
+  });
+
+  it('an explicit disableFirebaseProxy() overrides a runtime force', async () => {
+    const mod = await freshModule();
+    mod.forceFirebaseProxy();
+    mod.disableFirebaseProxy();
+    expect(mod.getFirebaseProxyOrigin()).toBeNull();
+  });
+
   it('ignores an expired cached verdict', async () => {
     const storage = makeMemoryStorage();
     storage.setItem(

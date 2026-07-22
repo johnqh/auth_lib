@@ -11,6 +11,7 @@ export {
 
 export {
   installFirebaseProxy,
+  forceFirebaseProxy,
   disableFirebaseProxy,
   autoConfigureFirebaseProxy,
   isFirebaseReachable,

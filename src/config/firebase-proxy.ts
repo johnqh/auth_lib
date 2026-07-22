@@ -63,9 +63,36 @@ const CHINA_TIMEZONES = new Set([
 const CACHE_KEY = 'sudobility.firebase-proxy.blocked';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
+declare global {
+  /**
+   * Testing escape hatch, symmetric to __SUDOBILITY_FIREBASE_PROXY_DISABLED:
+   * set to `true` (default proxy) or a proxy origin string BEFORE importing
+   * the library to force the proxy on even where Google is reachable.
+   */
+  var __SUDOBILITY_FIREBASE_PROXY_FORCED: boolean | string | undefined;
+}
+
 let activeProxyOrigin: string | null = null;
 let wrapperInstalled = false;
 let autoConfigurePromise: Promise<boolean> | null = null;
+let forcedByCaller = false;
+
+/** Proxy origin demanded via the global escape hatch, or null. */
+function forcedOriginFromGlobal(): string | null {
+  const v = globalThis.__SUDOBILITY_FIREBASE_PROXY_FORCED;
+  if (v === true) {
+    return DEFAULT_FIREBASE_PROXY_ORIGIN;
+  }
+  if (typeof v === 'string' && v) {
+    return v;
+  }
+  return null;
+}
+
+/** True while any force (runtime call or global) is in effect. */
+function isProxyForced(): boolean {
+  return forcedByCaller || forcedOriginFromGlobal() !== null;
+}
 
 /**
  * Rewrite a URL pointing at a known Firebase/Google host to the equivalent
@@ -155,10 +182,33 @@ export function installFirebaseProxy(
 }
 
 /**
+ * Force the proxy ON for testing, even where Google is directly reachable.
+ * Unlike installFirebaseProxy() this overrides an already-active origin and
+ * survives autoConfigureFirebaseProxy()'s reachability probe (which would
+ * otherwise switch the proxy back off). Undo with disableFirebaseProxy().
+ *
+ * Import-time alternative: set
+ * globalThis.__SUDOBILITY_FIREBASE_PROXY_FORCED = true (or a proxy origin
+ * string) before importing the library.
+ *
+ * @param proxyOrigin - Proxy origin; defaults to the Sudobility proxy
+ */
+export function forceFirebaseProxy(
+  proxyOrigin: string = DEFAULT_FIREBASE_PROXY_ORIGIN
+): void {
+  forcedByCaller = true;
+  activeProxyOrigin = proxyOrigin;
+  ensureWrapperInstalled();
+}
+
+/**
  * Stop routing through the proxy. The fetch wrapper stays installed as a
  * transparent pass-through; a later installFirebaseProxy() re-enables it.
+ * Also clears a forceFirebaseProxy() force (an explicit call wins); a force
+ * set via the __SUDOBILITY_FIREBASE_PROXY_FORCED global must be unset there.
  */
 export function disableFirebaseProxy(): void {
+  forcedByCaller = false;
   activeProxyOrigin = null;
 }
 
@@ -302,6 +352,14 @@ async function runAutoConfigure(
   }
   const proxyOrigin = options.proxyOrigin ?? DEFAULT_FIREBASE_PROXY_ORIGIN;
 
+  // A force (testing escape hatch) short-circuits detection entirely: the
+  // proxy goes on, no probe runs, and nothing here will turn it back off.
+  const forcedOrigin = forcedOriginFromGlobal();
+  if (forcedOrigin || forcedByCaller) {
+    forceFirebaseProxy(forcedOrigin ?? proxyOrigin);
+    return true;
+  }
+
   // Fast path: apply the cached verdict (or the timezone heuristic on a
   // cache miss) immediately, so a blocked device doesn't leak its first
   // requests to the direct route while the probe is in flight.
@@ -316,6 +374,10 @@ async function runAutoConfigure(
   const reachable = await isFirebaseReachable(options.probeTimeoutMs);
   writeCachedBlocked(!reachable);
 
+  // A force applied while the probe was in flight also wins over its verdict.
+  if (isProxyForced()) {
+    return true;
+  }
   if (reachable) {
     disableFirebaseProxy();
   } else {
