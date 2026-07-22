@@ -7,6 +7,14 @@
  * - Firebase error message utilities
  */
 
+// Reverse-proxy shim for regions where googleapis.com is blocked.
+// AUTOMATIC: self-configures routing on library import (cached verdict /
+// China-timezone heuristic instantly, then a reachability probe confirms).
+// Kept as the FIRST import so the fetch patch is in place before any module
+// that loads firebase/auth. Opt out with
+// globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED = true before importing.
+import './config/firebase-proxy-auto';
+
 // Config
 export {
   initializeFirebaseAuth,
@@ -15,13 +23,16 @@ export {
   isFirebaseConfigured,
 } from './config';
 
-// Reverse-proxy shim (web only) for regions where googleapis.com is blocked.
-// installFirebaseProxy() must run BEFORE Firebase is initialized.
 export {
   installFirebaseProxy,
+  disableFirebaseProxy,
+  autoConfigureFirebaseProxy,
   isFirebaseReachable,
+  isLikelyChinaRegion,
   rewriteFirebaseProxyUrl,
   getFirebaseProxyOrigin,
+  DEFAULT_FIREBASE_PROXY_ORIGIN,
+  type AutoConfigureFirebaseProxyOptions,
 } from './config';
 
 export type {

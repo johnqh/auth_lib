@@ -25,8 +25,11 @@ src/
 │   ├── firebase-init.ts                      # Web Firebase init (singleton, uses firebase/app + firebase/auth)
 │   ├── firebase-init.rn.ts                   # React Native Firebase init (lazy-loads @react-native-firebase modules)
 │   ├── firebase-init.test.ts                 # Tests for firebase-init
-│   ├── firebase-proxy.ts                     # Web-only reverse-proxy shim (fetch/sendBeacon rewrite) for regions where googleapis.com is blocked
-│   └── firebase-proxy.test.ts                # Tests for firebase-proxy
+│   ├── firebase-proxy.ts                     # Reverse-proxy shim (fetch/sendBeacon rewrite) + automatic detection (cache/timezone/probe) for regions where googleapis.com is blocked
+│   ├── firebase-proxy-auto.ts                # Web import-time side effect: runs autoConfigureFirebaseProxy()
+│   ├── firebase-proxy-auto.native.ts         # RN import-time side effect (JS fetch-level only; native RNFirebase traffic not covered)
+│   ├── firebase-proxy.test.ts                # Tests for the shim
+│   └── firebase-proxy-auto.test.ts           # Tests for detection/auto-configuration
 ├── hooks/
 │   ├── index.ts                              # Hooks barrel exports
 │   ├── useFirebaseAuthNetworkClient.ts       # Hook + factory for auth-aware NetworkClient (401 retry, 403 logout)
@@ -53,10 +56,14 @@ src/
 | `isFirebaseConfigured()` | function | Check if Firebase app is initialized |
 | `FirebaseInitResult` | type | `{ app: FirebaseApp; auth: Auth }` |
 | `FirebaseAuthNetworkClientOptions` | type | `{ onLogout?: () => void; onTokenRefreshFailed?: (error: unknown) => void }` |
-| `installFirebaseProxy(proxyOrigin)` | function | Web only. Patches `fetch`/`sendBeacon` to route Firebase SDK traffic (Auth, Remote Config, Installations, Analytics) through a reverse proxy for regions where googleapis.com is blocked. Must run BEFORE Firebase init. Idempotent. |
-| `isFirebaseReachable(timeoutMs?)` | function | Probes Google endpoints (no-cors, 3s default timeout); false means blocked — install the proxy |
+| `autoConfigureFirebaseProxy(options?)` | function | AUTOMATIC (runs as import side effect on both entries): decides whether Firebase traffic needs the reverse proxy — cached verdict (localStorage 24h) or China-timezone heuristic applies instantly, then a reachability probe confirms/corrects. Memoized per session. Opt out: `globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED = true` before import. |
+| `installFirebaseProxy(proxyOrigin?)` | function | Force the proxy on. Patches `fetch`/`sendBeacon` to route Firebase SDK traffic (Auth, Remote Config, Installations, Analytics) through a reverse proxy. Defaults to `DEFAULT_FIREBASE_PROXY_ORIGIN`. Idempotent while active. JS fetch-level only — native @react-native-firebase traffic is NOT redirected. |
+| `disableFirebaseProxy()` | function | Switch back to direct routing (wrapper stays as pass-through) |
+| `isFirebaseReachable(timeoutMs?)` | function | Probes Google directly (no-cors, 3s default; probe host is never rewritten by the shim); false means blocked |
+| `isLikelyChinaRegion()` | function | Instant offline heuristic: device timezone is mainland-China (HK/Macau/Taipei excluded) |
 | `rewriteFirebaseProxyUrl(url, proxyOrigin)` | function | Pure URL-rewrite helper backing the shim (exported for testing/custom transports) |
-| `getFirebaseProxyOrigin()` | function | Installed proxy origin, or null if the shim is not installed |
+| `getFirebaseProxyOrigin()` | function | Active proxy origin, or null when traffic goes direct |
+| `DEFAULT_FIREBASE_PROXY_ORIGIN` | const | `https://firebaseproxy.sudobility.com` |
 
 ### Hooks (`hooks/`)
 | Export | Type | Description |

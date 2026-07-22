@@ -11,9 +11,14 @@ export {
 
 export {
   installFirebaseProxy,
+  disableFirebaseProxy,
+  autoConfigureFirebaseProxy,
   isFirebaseReachable,
+  isLikelyChinaRegion,
   rewriteFirebaseProxyUrl,
   getFirebaseProxyOrigin,
+  DEFAULT_FIREBASE_PROXY_ORIGIN,
+  type AutoConfigureFirebaseProxyOptions,
 } from './firebase-proxy';
 
 export type {

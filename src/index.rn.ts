@@ -4,6 +4,24 @@
  * This is the React Native entry point that uses @react-native-firebase.
  */
 
+// Reverse-proxy shim for regions where googleapis.com is blocked.
+// AUTOMATIC: self-configures on import (JS fetch-level traffic only —
+// native @react-native-firebase SDK traffic is not redirected). Opt out
+// with globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED = true.
+import './config/firebase-proxy-auto.native.js';
+
+export {
+  installFirebaseProxy,
+  disableFirebaseProxy,
+  autoConfigureFirebaseProxy,
+  isFirebaseReachable,
+  isLikelyChinaRegion,
+  rewriteFirebaseProxyUrl,
+  getFirebaseProxyOrigin,
+  DEFAULT_FIREBASE_PROXY_ORIGIN,
+  type AutoConfigureFirebaseProxyOptions,
+} from './config/firebase-proxy.js';
+
 // Config (RN version)
 export {
   initializeFirebaseAuth,
