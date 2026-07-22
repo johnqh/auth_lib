@@ -15,6 +15,15 @@ export {
   isFirebaseConfigured,
 } from './config';
 
+// Reverse-proxy shim (web only) for regions where googleapis.com is blocked.
+// installFirebaseProxy() must run BEFORE Firebase is initialized.
+export {
+  installFirebaseProxy,
+  isFirebaseReachable,
+  rewriteFirebaseProxyUrl,
+  getFirebaseProxyOrigin,
+} from './config';
+
 export type {
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,

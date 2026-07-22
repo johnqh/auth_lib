@@ -9,6 +9,13 @@ export {
   isFirebaseConfigured,
 } from './firebase-init';
 
+export {
+  installFirebaseProxy,
+  isFirebaseReachable,
+  rewriteFirebaseProxyUrl,
+  getFirebaseProxyOrigin,
+} from './firebase-proxy';
+
 export type {
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,

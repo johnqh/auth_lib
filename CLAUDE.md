@@ -24,7 +24,9 @@ src/
 │   ├── types.ts                              # FirebaseInitResult, FirebaseAuthNetworkClientOptions interfaces
 │   ├── firebase-init.ts                      # Web Firebase init (singleton, uses firebase/app + firebase/auth)
 │   ├── firebase-init.rn.ts                   # React Native Firebase init (lazy-loads @react-native-firebase modules)
-│   └── firebase-init.test.ts                 # Tests for firebase-init
+│   ├── firebase-init.test.ts                 # Tests for firebase-init
+│   ├── firebase-proxy.ts                     # Web-only reverse-proxy shim (fetch/sendBeacon rewrite) for regions where googleapis.com is blocked
+│   └── firebase-proxy.test.ts                # Tests for firebase-proxy
 ├── hooks/
 │   ├── index.ts                              # Hooks barrel exports
 │   ├── useFirebaseAuthNetworkClient.ts       # Hook + factory for auth-aware NetworkClient (401 retry, 403 logout)
@@ -51,6 +53,10 @@ src/
 | `isFirebaseConfigured()` | function | Check if Firebase app is initialized |
 | `FirebaseInitResult` | type | `{ app: FirebaseApp; auth: Auth }` |
 | `FirebaseAuthNetworkClientOptions` | type | `{ onLogout?: () => void; onTokenRefreshFailed?: (error: unknown) => void }` |
+| `installFirebaseProxy(proxyOrigin)` | function | Web only. Patches `fetch`/`sendBeacon` to route Firebase SDK traffic (Auth, Remote Config, Installations, Analytics) through a reverse proxy for regions where googleapis.com is blocked. Must run BEFORE Firebase init. Idempotent. |
+| `isFirebaseReachable(timeoutMs?)` | function | Probes Google endpoints (no-cors, 3s default timeout); false means blocked — install the proxy |
+| `rewriteFirebaseProxyUrl(url, proxyOrigin)` | function | Pure URL-rewrite helper backing the shim (exported for testing/custom transports) |
+| `getFirebaseProxyOrigin()` | function | Installed proxy origin, or null if the shim is not installed |
 
 ### Hooks (`hooks/`)
 | Export | Type | Description |
