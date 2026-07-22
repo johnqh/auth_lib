@@ -8,6 +8,8 @@ export {
   invalidateTokenCache,
 } from './useFirebaseAuthNetworkClient';
 
+export { useProxyFilteredAuthProviders } from './useProxyFilteredAuthProviders';
+
 export {
   useSiteAdmin,
   siteAdminQueryKey,

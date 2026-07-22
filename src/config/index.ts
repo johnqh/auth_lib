@@ -22,6 +22,8 @@ export {
   type AutoConfigureFirebaseProxyOptions,
 } from './firebase-proxy';
 
+export { filterAuthProvidersForProxy } from './firebase-proxy-providers';
+
 export type {
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,

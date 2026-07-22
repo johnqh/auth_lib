@@ -23,6 +23,8 @@ export {
   type AutoConfigureFirebaseProxyOptions,
 } from './config/firebase-proxy.js';
 
+export { filterAuthProvidersForProxy } from './config/firebase-proxy-providers.js';
+
 // Config (RN version)
 export {
   initializeFirebaseAuth,
@@ -44,6 +46,7 @@ export type {
 export {
   useFirebaseAuthNetworkClient,
   createFirebaseAuthNetworkClient,
+  useProxyFilteredAuthProviders,
 } from './hooks/index.js';
 
 export {

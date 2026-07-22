@@ -36,6 +36,8 @@ export {
   type AutoConfigureFirebaseProxyOptions,
 } from './config';
 
+export { filterAuthProvidersForProxy } from './config';
+
 export type {
   FirebaseInitResult,
   FirebaseAuthNetworkClientOptions,
@@ -45,6 +47,7 @@ export type {
 export {
   useFirebaseAuthNetworkClient,
   createFirebaseAuthNetworkClient,
+  useProxyFilteredAuthProviders,
 } from './hooks';
 
 export {
