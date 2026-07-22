@@ -9,7 +9,10 @@
  * (set before the library is imported).
  */
 
-import { autoConfigureFirebaseProxy } from './firebase-proxy';
+import {
+  autoConfigureFirebaseProxy,
+  isTestEnvironment,
+} from './firebase-proxy';
 
 declare global {
   var __SUDOBILITY_FIREBASE_PROXY_DISABLED: boolean | undefined;
@@ -19,6 +22,10 @@ const isReactNative =
   typeof navigator !== 'undefined' &&
   (navigator as { product?: string }).product === 'ReactNative';
 
-if (isReactNative && globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED !== true) {
+if (
+  isReactNative &&
+  !isTestEnvironment() &&
+  globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED !== true
+) {
   void autoConfigureFirebaseProxy();
 }

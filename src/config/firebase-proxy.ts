@@ -244,6 +244,24 @@ function writeCachedBlocked(blocked: boolean): void {
   }
 }
 
+/**
+ * Detect test runners (vitest, jest, NODE_ENV=test) so the import-time
+ * auto-configuration never fires real network probes inside a test suite.
+ * Tests exercising the proxy call autoConfigureFirebaseProxy() explicitly
+ * with stubbed fetch.
+ */
+export function isTestEnvironment(): boolean {
+  const env = (
+    globalThis as {
+      process?: { env?: Record<string, string | undefined> };
+    }
+  ).process?.env;
+  return !!(
+    env &&
+    (env.VITEST || env.JEST_WORKER_ID || env.NODE_ENV === 'test')
+  );
+}
+
 export interface AutoConfigureFirebaseProxyOptions {
   /** Proxy origin to use when blocked; defaults to the Sudobility proxy. */
   proxyOrigin?: string;

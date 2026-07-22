@@ -6,7 +6,10 @@
  * library is imported).
  */
 
-import { autoConfigureFirebaseProxy } from './firebase-proxy';
+import {
+  autoConfigureFirebaseProxy,
+  isTestEnvironment,
+} from './firebase-proxy';
 
 declare global {
   var __SUDOBILITY_FIREBASE_PROXY_DISABLED: boolean | undefined;
@@ -15,6 +18,7 @@ declare global {
 if (
   typeof window !== 'undefined' &&
   typeof document !== 'undefined' &&
+  !isTestEnvironment() &&
   globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED !== true
 ) {
   void autoConfigureFirebaseProxy();
