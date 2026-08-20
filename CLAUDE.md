@@ -1,5 +1,10 @@
 # auth_lib - AI Development Guide
 
+> **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
+> Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
+> explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
+> finishing a task is not permission to commit it.
+
 ## Overview
 
 Firebase authentication library providing configurable auth initialization, resilient network clients with automatic token refresh and logout handling, admin utilities, and React hooks for auth state management. Supports both web (Firebase JS SDK) and React Native (@react-native-firebase) platforms through conditional entry points.
@@ -212,3 +217,7 @@ sudojo_app (consumes auth)
 - Prettier: single quotes, trailing commas (es5), 80 char width, 2-space indent, no tabs, arrow parens avoid
 - ESLint: flat config, TypeScript plugin, prefer-const, no-var, prefer-template, sorted imports
 - Unused vars prefixed with `_` are allowed
+
+## Git Workflow
+
+- Do not use feature branches for code changes. Always stay on the current branch.
