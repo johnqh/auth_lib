@@ -16,12 +16,30 @@ bun add react firebase @sudobility/di @sudobility/types @tanstack/react-query
 bun add @react-native-firebase/app @react-native-firebase/auth
 ```
 
+## The network client
+
+Use **`FirebaseAuthNetworkService`**. It implements `NetworkClient`, injects the
+Firebase ID token, sets `Content-Type: application/json` on request bodies, and
+has a `.rn` variant for React Native.
+
+Its session policy:
+
+| Response | Behavior |
+|----------|----------|
+| 401, refresh succeeds | retry once with the fresh token |
+| 401, unrecoverable | sign the user out -- the session is dead |
+| 403 | return the response untouched; the caller is authenticated but lacks permission |
+
+A 403 never ends the session. APIs in this workspace use 403 for role and
+permission denials, so signing out there would log a user out for clicking
+something they merely lack access to.
+
 ## Usage
 
 ```typescript
 import {
   initializeFirebaseAuth,
-  useFirebaseAuthNetworkClient,
+  FirebaseAuthNetworkService,
   useSiteAdmin,
   getFirebaseErrorMessage,
 } from '@sudobility/auth_lib';
@@ -29,10 +47,8 @@ import {
 // Initialize Firebase Auth (after Firebase app is initialized)
 const { app, auth } = initializeFirebaseAuth();
 
-// In a React component: get an auth-aware network client
-const networkClient = useFirebaseAuthNetworkClient({
-  onLogout: () => navigate('/login'),
-});
+// Auth-aware network client: 401 refreshes the token and retries once
+const networkClient = new FirebaseAuthNetworkService();
 
 // Check if user is a site admin
 const { isSiteAdmin, isLoading } = useSiteAdmin({
@@ -58,7 +74,6 @@ const { isSiteAdmin, isLoading } = useSiteAdmin({
 
 | Export | Description |
 |---|---|
-| `useFirebaseAuthNetworkClient(options?)` | Auth-aware NetworkClient with 401 retry and 403 logout |
 | `createFirebaseAuthNetworkClient(platformNetwork?, options?)` | Non-hook factory version |
 | `useSiteAdmin(options)` | Check site admin status via TanStack Query |
 
@@ -66,7 +81,7 @@ const { isSiteAdmin, isLoading } = useSiteAdmin({
 
 | Export | Description |
 |---|---|
-| `FirebaseAuthNetworkService` | Auth-aware network service (web and RN variants) |
+| `FirebaseAuthNetworkService` | Auth-aware network service (web and RN variants). 401 refresh-and-retry, logout only when unrecoverable; 403 left to the caller |
 
 ### Utils (`utils/`)
 

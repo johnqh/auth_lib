@@ -2,12 +2,6 @@
  * @fileoverview Hooks exports
  */
 
-export {
-  useFirebaseAuthNetworkClient,
-  createFirebaseAuthNetworkClient,
-  invalidateTokenCache,
-} from './useFirebaseAuthNetworkClient';
-
 export { useProxyFilteredAuthProviders } from './useProxyFilteredAuthProviders';
 
 export {

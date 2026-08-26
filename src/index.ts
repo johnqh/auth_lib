@@ -44,11 +44,7 @@ export type {
 } from './config';
 
 // Hooks
-export {
-  useFirebaseAuthNetworkClient,
-  createFirebaseAuthNetworkClient,
-  useProxyFilteredAuthProviders,
-} from './hooks';
+export { useProxyFilteredAuthProviders } from './hooks';
 
 export {
   useSiteAdmin,

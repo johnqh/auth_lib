@@ -39,15 +39,7 @@ export type {
 } from './config/types.js';
 
 // Hooks - these are React hooks that work on both platforms.
-// useFirebaseAuthNetworkClient imports firebase-init via a bare path; on React
-// Native bundlers (Metro) that resolves to firebase-init.native.ts (the
-// @react-native-firebase impl), and on web bundlers to firebase-init.ts. The
-// transport comes from @sudobility/di (RN build).
-export {
-  useFirebaseAuthNetworkClient,
-  createFirebaseAuthNetworkClient,
-  useProxyFilteredAuthProviders,
-} from './hooks/index.js';
+export { useProxyFilteredAuthProviders } from './hooks/index.js';
 
 export {
   useSiteAdmin,

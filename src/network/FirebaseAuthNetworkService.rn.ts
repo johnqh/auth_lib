@@ -1,25 +1,38 @@
 /**
- * @fileoverview React Native Firebase-aware network service with automatic token refresh and logout handling.
+ * @fileoverview React Native Firebase-aware network client with automatic token
+ * refresh and logout handling.
  *
  * Uses @react-native-firebase/auth for token management.
- * Extends RNNetworkService to add:
- * - On 401 (Unauthorized): Force refresh Firebase token and retry once
- * - On 403 (Forbidden): Log the user out
+ * Extends RNNetworkClient -- the React Native `NetworkClient` implementation --
+ * so it exposes the same parsed `NetworkResponse` contract as the web variant.
+ * (It previously extended `RNNetworkService`, whose methods return a raw
+ * `fetch` Response, which is not interchangeable with a `NetworkClient`.)
+ *
+ * Adds:
+ * - On 401 (Unauthorized): Force refresh the Firebase token and retry once.
+ *   If the refresh yields no token, or the retry is still rejected, the
+ *   session is dead and the user is logged out.
+ * - On 403 (Forbidden): nothing. 403 is an authorization failure -- the caller
+ *   is authenticated but lacks permission -- so the session is left alone and
+ *   the error is surfaced for the UI to handle.
  */
 
-import { RNNetworkService } from '@sudobility/di/rn';
+import { RNNetworkClient } from '@sudobility/di/rn';
+import type { NetworkRequestOptions, NetworkResponse } from '@sudobility/types';
 import { getFirebaseAuth } from '../config/firebase-init.native.js';
 
 export interface FirebaseAuthNetworkServiceOptions {
-  /** Called when user is logged out due to 403 */
+  /** Called when the user is logged out after an unrecoverable 401 */
   onLogout?: () => void;
   /** Called when token refresh fails */
   onTokenRefreshFailed?: (error: Error) => void;
+  /** Default request timeout in milliseconds */
+  defaultTimeoutMs?: number;
 }
 
 /**
- * Get a fresh Firebase ID token with force refresh.
- * Returns empty string if not authenticated.
+ * Get a Firebase ID token, optionally forcing a refresh.
+ * Returns an empty string when not authenticated.
  */
 async function getAuthToken(forceRefresh = false): Promise<string> {
   const auth = getFirebaseAuth();
@@ -48,52 +61,78 @@ async function logoutUser(onLogout?: () => void): Promise<void> {
 }
 
 /**
- * Network service with Firebase authentication support for React Native.
- * Automatically refreshes token on 401 and logs out on 403.
+ * Network client with Firebase authentication support for React Native.
+ * Refreshes the token and retries once on 401, logging out only when that
+ * recovery fails. A 403 never affects the session.
  */
-export class FirebaseAuthNetworkService extends RNNetworkService {
+export class FirebaseAuthNetworkService extends RNNetworkClient {
   private serviceOptions: FirebaseAuthNetworkServiceOptions | undefined;
 
   constructor(options?: FirebaseAuthNetworkServiceOptions) {
-    super();
+    super(options?.defaultTimeoutMs);
     this.serviceOptions = options;
   }
 
   /**
-   * Override request to add 401 retry and 403 logout handling.
+   * Inject the Firebase token, retry once on 401, and end the session when
+   * that retry cannot succeed.
+   *
+   * RNNetworkClient throws a NetworkError for non-OK responses, so the status
+   * is read off the thrown error rather than a returned response.
    */
-  override async request(
+  override async request<T = unknown>(
     url: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
-    const response = await super.request(url, options);
-
-    // On 401, get fresh token and retry once
-    if (response.status === 401) {
-      const freshToken = await getAuthToken(true);
-      if (freshToken) {
-        const retryHeaders = {
-          ...(options.headers as Record<string, string>),
-          Authorization: `Bearer ${freshToken}`,
-        };
-        return super.request(url, {
-          ...options,
-          headers: retryHeaders,
-        });
-      } else {
-        // Token refresh failed
-        this.serviceOptions?.onTokenRefreshFailed?.(
-          new Error('Failed to refresh token')
-        );
+    options: NetworkRequestOptions = {}
+  ): Promise<NetworkResponse<T>> {
+    const headers = { ...options.headers };
+    if (!headers['Authorization']) {
+      const token = await getAuthToken(false);
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
     }
 
-    // On 403, log the user out
-    if (response.status === 403) {
-      await logoutUser(this.serviceOptions?.onLogout);
-      // Return the original response so the UI can handle it
-    }
+    try {
+      return await super.request<T>(url, { ...options, headers });
+    } catch (error) {
+      if (error && typeof error === 'object' && 'status' in error) {
+        const networkError = error as { status: number; message: string };
 
-    return response;
+        if (networkError.status === 401) {
+          const freshToken = await getAuthToken(true);
+          if (freshToken) {
+            try {
+              return await super.request<T>(url, {
+                ...options,
+                headers: {
+                  ...options.headers,
+                  Authorization: `Bearer ${freshToken}`,
+                },
+              });
+            } catch (retryError) {
+              // A 401 that survives a fresh token is an unrecoverable session.
+              if (
+                retryError &&
+                typeof retryError === 'object' &&
+                'status' in retryError &&
+                (retryError as { status: number }).status === 401
+              ) {
+                await logoutUser(this.serviceOptions?.onLogout);
+              }
+              throw retryError;
+            }
+          }
+
+          // Refresh produced no token -- the session cannot be recovered.
+          this.serviceOptions?.onTokenRefreshFailed?.(
+            new Error('Failed to refresh token')
+          );
+          await logoutUser(this.serviceOptions?.onLogout);
+        }
+      }
+
+      // 403 and everything else: surface the error, leave the session alone.
+      throw error;
+    }
   }
 }
