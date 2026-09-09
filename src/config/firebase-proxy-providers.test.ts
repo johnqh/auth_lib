@@ -2,6 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const TEST_PROXY = 'https://fb-api.example.com';
 
+/** Google unreachable => di's detection turns routing on. */
+function stubBlockedNetwork() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.reject(new Error('blocked')))
+  );
+}
+
 /** Fresh module per test — the proxy module keeps singleton state. */
 async function freshModules() {
   vi.resetModules();
@@ -25,7 +33,9 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('drops non-Apple OAuth providers while the proxy is on', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy(TEST_PROXY);
+    stubBlockedNetwork();
+    proxy.setFirebaseProxy(TEST_PROXY);
+    await proxy.firebaseProxyReady();
     expect(
       providers.filterAuthProvidersForProxy(['google', 'apple', 'email'])
     ).toEqual(['apple', 'email']);
@@ -33,7 +43,9 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('keeps non-OAuth entries (email, anonymous) while the proxy is on', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy(TEST_PROXY);
+    stubBlockedNetwork();
+    proxy.setFirebaseProxy(TEST_PROXY);
+    await proxy.firebaseProxyReady();
     expect(providers.filterAuthProvidersForProxy(['google', 'email'])).toEqual([
       'email',
     ]);
@@ -41,7 +53,9 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('drops other blocked OAuth vendors too, not just google', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy(TEST_PROXY);
+    stubBlockedNetwork();
+    proxy.setFirebaseProxy(TEST_PROXY);
+    await proxy.firebaseProxyReady();
     expect(
       providers.filterAuthProvidersForProxy([
         'facebook',
@@ -66,7 +80,9 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('reflects the proxy turning back off', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy(TEST_PROXY);
+    stubBlockedNetwork();
+    proxy.setFirebaseProxy(TEST_PROXY);
+    await proxy.firebaseProxyReady();
     proxy.disableFirebaseProxy();
     expect(
       providers.filterAuthProvidersForProxy(['google', 'apple', 'email'])

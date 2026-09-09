@@ -14,12 +14,8 @@ export {
   getFirebaseProxyOrigin,
   isFirebaseProxyActive,
   firebaseProxyReady,
-  forceFirebaseProxy,
   disableFirebaseProxy,
-  installFirebaseProxy,
   rewriteFirebaseProxyUrl,
-  isFirebaseReachable,
-  isLikelyChinaRegion,
 } from '@sudobility/di';
 
 export { filterAuthProvidersForProxy } from './firebase-proxy-providers';

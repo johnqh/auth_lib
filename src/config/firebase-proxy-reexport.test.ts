@@ -8,7 +8,6 @@ describe('auth_lib proxy surface', () => {
     'getFirebaseProxyOrigin',
     'firebaseProxyReady',
     'disableFirebaseProxy',
-    'isFirebaseReachable',
   ])('re-exports %s from di', name => {
     expect(typeof (authLib as Record<string, unknown>)[name]).toBe('function');
   });
