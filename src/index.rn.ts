@@ -5,23 +5,18 @@
  */
 
 // Reverse-proxy shim for regions where googleapis.com is blocked.
-// AUTOMATIC: self-configures on import (JS fetch-level traffic only —
-// native @react-native-firebase SDK traffic is not redirected). Opt out
-// with globalThis.__SUDOBILITY_FIREBASE_PROXY_DISABLED = true.
-import './config/firebase-proxy-auto.native.js';
-
 export {
-  installFirebaseProxy,
+  setFirebaseProxy,
+  getFirebaseProxyOrigin,
+  isFirebaseProxyActive,
+  firebaseProxyReady,
   forceFirebaseProxy,
   disableFirebaseProxy,
-  autoConfigureFirebaseProxy,
+  installFirebaseProxy,
+  rewriteFirebaseProxyUrl,
   isFirebaseReachable,
   isLikelyChinaRegion,
-  rewriteFirebaseProxyUrl,
-  getFirebaseProxyOrigin,
-  DEFAULT_FIREBASE_PROXY_ORIGIN,
-  type AutoConfigureFirebaseProxyOptions,
-} from './config/firebase-proxy.js';
+} from '@sudobility/di';
 
 export { filterAuthProvidersForProxy } from './config/firebase-proxy-providers.js';
 

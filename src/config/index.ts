@@ -10,17 +10,17 @@ export {
 } from './firebase-init';
 
 export {
-  installFirebaseProxy,
+  setFirebaseProxy,
+  getFirebaseProxyOrigin,
+  isFirebaseProxyActive,
+  firebaseProxyReady,
   forceFirebaseProxy,
   disableFirebaseProxy,
-  autoConfigureFirebaseProxy,
+  installFirebaseProxy,
+  rewriteFirebaseProxyUrl,
   isFirebaseReachable,
   isLikelyChinaRegion,
-  rewriteFirebaseProxyUrl,
-  getFirebaseProxyOrigin,
-  DEFAULT_FIREBASE_PROXY_ORIGIN,
-  type AutoConfigureFirebaseProxyOptions,
-} from './firebase-proxy';
+} from '@sudobility/di';
 
 export { filterAuthProvidersForProxy } from './firebase-proxy-providers';
 

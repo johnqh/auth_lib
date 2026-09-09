@@ -9,7 +9,7 @@
  * configured provider list is narrowed to those.
  */
 
-import { getFirebaseProxyOrigin } from './firebase-proxy';
+import { isFirebaseProxyActive } from '@sudobility/di';
 
 /** OAuth vendors whose interactive flows are blocked alongside Google. */
 const BLOCKED_OAUTH_PROVIDERS: ReadonlySet<string> = new Set([
@@ -29,12 +29,13 @@ const BLOCKED_OAUTH_PROVIDERS: ReadonlySet<string> = new Set([
  *
  * @param providers - Provider ids as configured by the client app
  * @param proxyActive - Override for the current proxy state (defaults to
- *   whether a proxy origin is active right now)
+ *   whether traffic is actually being routed through the proxy right now,
+ *   NOT merely whether an origin has been configured)
  * @returns The filtered list (a new array)
  */
 export function filterAuthProvidersForProxy<T extends string>(
   providers: readonly T[],
-  proxyActive: boolean = getFirebaseProxyOrigin() !== null
+  proxyActive: boolean = isFirebaseProxyActive()
 ): T[] {
   if (!proxyActive) {
     return [...providers];

@@ -4,10 +4,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  autoConfigureFirebaseProxy,
-  getFirebaseProxyOrigin,
-} from '../config/firebase-proxy';
+import { firebaseProxyReady, isFirebaseProxyActive } from '@sudobility/di';
 import { filterAuthProvidersForProxy } from '../config/firebase-proxy-providers';
 
 /**
@@ -22,15 +19,13 @@ import { filterAuthProvidersForProxy } from '../config/firebase-proxy-providers'
 export function useProxyFilteredAuthProviders<T extends string>(
   providers: readonly T[]
 ): T[] {
-  const [proxyActive, setProxyActive] = useState(
-    () => getFirebaseProxyOrigin() !== null
-  );
+  const [proxyActive, setProxyActive] = useState(() => isFirebaseProxyActive());
 
   useEffect(() => {
     let cancelled = false;
-    void autoConfigureFirebaseProxy().then(() => {
+    void firebaseProxyReady().then(() => {
       if (!cancelled) {
-        setProxyActive(getFirebaseProxyOrigin() !== null);
+        setProxyActive(isFirebaseProxyActive());
       }
     });
     return () => {

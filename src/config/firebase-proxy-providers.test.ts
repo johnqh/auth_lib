@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const TEST_PROXY = 'https://fb-api.example.com';
+
 /** Fresh module per test — the proxy module keeps singleton state. */
 async function freshModules() {
   vi.resetModules();
-  const proxy = await import('./firebase-proxy');
+  const proxy = await import('@sudobility/di');
   const providers = await import('./firebase-proxy-providers');
   return { proxy, providers };
 }
@@ -23,7 +25,7 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('drops non-Apple OAuth providers while the proxy is on', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy();
+    proxy.forceFirebaseProxy(TEST_PROXY);
     expect(
       providers.filterAuthProvidersForProxy(['google', 'apple', 'email'])
     ).toEqual(['apple', 'email']);
@@ -31,7 +33,7 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('keeps non-OAuth entries (email, anonymous) while the proxy is on', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy();
+    proxy.forceFirebaseProxy(TEST_PROXY);
     expect(providers.filterAuthProvidersForProxy(['google', 'email'])).toEqual([
       'email',
     ]);
@@ -39,7 +41,7 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('drops other blocked OAuth vendors too, not just google', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy();
+    proxy.forceFirebaseProxy(TEST_PROXY);
     expect(
       providers.filterAuthProvidersForProxy([
         'facebook',
@@ -64,7 +66,7 @@ describe('filterAuthProvidersForProxy', () => {
 
   it('reflects the proxy turning back off', async () => {
     const { proxy, providers } = await freshModules();
-    proxy.forceFirebaseProxy();
+    proxy.forceFirebaseProxy(TEST_PROXY);
     proxy.disableFirebaseProxy();
     expect(
       providers.filterAuthProvidersForProxy(['google', 'apple', 'email'])
