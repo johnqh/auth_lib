@@ -40,7 +40,7 @@
     "lint": "bunx eslint src",
     "lint:fix": "bunx eslint src --fix",
     "format": "bunx prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
-    "test": "vitest run",
+    "test:unit": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "bun run build"
   },
