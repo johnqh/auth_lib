@@ -26,8 +26,12 @@ export interface FirebaseAuthNetworkServiceOptions {
   defaultTimeoutMs?: number;
 }
 
-// Token cache for proactive refresh
+// Token cache for proactive refresh.
+// The cache is scoped to the uid it was minted for: a cached token must never
+// be handed out after the signed-in user changes, or the new user's requests
+// would be authorized as the previous one.
 let cachedToken: string | null = null;
+let cachedTokenUid: string | null = null;
 let tokenTimestamp: number = 0;
 
 /**
@@ -46,6 +50,7 @@ async function getAuthToken(
   if (!user) {
     console.error('[FirebaseAuthNetworkService] getAuthToken: No current user');
     cachedToken = null;
+    cachedTokenUid = null;
     tokenTimestamp = 0;
     return '';
   }
@@ -54,8 +59,8 @@ async function getAuthToken(
   const tokenAge = now - tokenTimestamp;
   const isStale = tokenAge > refreshIntervalMs;
 
-  // Return cached token if valid and not forced refresh
-  if (!forceRefresh && !isStale && cachedToken) {
+  // Return cached token if valid, minted for this same user, and not forced
+  if (!forceRefresh && !isStale && cachedToken && cachedTokenUid === user.uid) {
     return cachedToken;
   }
 
@@ -64,11 +69,13 @@ async function getAuthToken(
     const shouldForceRefresh = forceRefresh || isStale;
     const token = await user.getIdToken(shouldForceRefresh);
     cachedToken = token;
+    cachedTokenUid = user.uid;
     tokenTimestamp = now;
     return token;
   } catch (error) {
     console.error('[FirebaseAuthNetworkService] getAuthToken failed:', error);
     cachedToken = null;
+    cachedTokenUid = null;
     tokenTimestamp = 0;
     return '';
   }
