@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.98",
+  "version": "0.0.99",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,6 +18,10 @@
     "./oauth": {
       "import": "./dist/oauth/index.js",
       "types": "./dist/oauth/index.d.ts"
+    },
+    "./signin": {
+      "import": "./dist/signin/index.js",
+      "types": "./dist/signin/index.d.ts"
     },
     "./auth-js": {
       "import": "./dist/auth/index.js",
@@ -49,7 +53,7 @@
     "firebase": "^12.7.0",
     "@react-native-firebase/app": ">=18.0.0",
     "@react-native-firebase/auth": ">=18.0.0",
-    "@sudobility/di": "^1.5.66",
+    "@sudobility/di": "^1.5.67",
     "@sudobility/types": "^1.9.68",
     "@tanstack/react-query": "^5.0.0"
   },
@@ -65,7 +69,7 @@
     }
   },
   "devDependencies": {
-    "@sudobility/di": "^1.5.66",
+    "@sudobility/di": "^1.5.67",
     "@sudobility/types": "^1.9.68",
     "@tanstack/react-query": "^5.80.7",
     "@types/node": "^22.0.0",

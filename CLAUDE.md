@@ -142,6 +142,26 @@ Two parallel implementations exist for auth-aware networking:
 ### Token Caching (Web `FirebaseAuthNetworkService` only)
 The web `FirebaseAuthNetworkService` maintains a module-level token cache (`cachedToken`, `tokenTimestamp`). Tokens are proactively refreshed if older than `tokenRefreshIntervalMs` (default 30 seconds), avoiding unnecessary calls to `user.getIdToken()`.
 
+### Sign-in on the JS SDK, in a React Native app (`signin/`, subpath `@sudobility/auth_lib/signin`)
+Google and Apple sign-in for an RN app that runs **Firebase's JS SDK on every platform** rather
+than `@react-native-firebase` on mobile. The native modules (`@react-native-google-signin`,
+`@invertase/react-native-apple-authentication`, `building_blocks_rn`'s `WebAuth`) are borrowed
+for an ID token and nothing else; the token goes to the JS SDK's `signInWithCredential`, so one
+Firebase holds one session everywhere. **This is what makes the China proxy work on a phone**:
+the proxy is a `fetch` wrapper, the JS SDK's RN build looks `fetch` up per request, and the
+native SDKs' connections never pass through it. Reference consumer: `music_app_rn`.
+
+| Export | Description |
+|---|---|
+| `SignInConfig`, `SignInPlatform` | The four values an app supplies (iOS-type Google client, web-type Google client, Apple Services ID + redirect) and `Platform.OS` narrowed. The family's env names are `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID`, `APPLE_SERVICE_ID`, `APPLE_REDIRECT_URI`; the library never reads an environment. |
+| `googleSignInAvailable(platform, config)` / `appleSignInAvailable(platform, config)` | Pure. iOS + desktops need the iOS-type client (its reversed form must be derivable — that is the redirect scheme); Android needs the web-type client, which is what makes Google return an ID token; Apple is built in on iOS, the web flow on Android, absent on desktops. |
+| `googleCredential(platform, config, modules)` / `appleCredential(platform, config, modules)` | An `OAuthCredential` or `null` for a closed sheet. Native modules are injected as narrow bridges (`GoogleSignInBridge`, `AppleAuthBridge`, `AppleAuthAndroidBridge`, `WebAuthBridge`) — **auth_lib names no native package** — as lazy `() => module` so the app can `require` inside the function (Metro turns a dynamic `import()` into a second bundle fetch that fails at the button). `iosClientId` is always passed on iOS: without it Google's module looks for a `GoogleService-Info.plist`, which an app on the JS SDK has no reason to ship. |
+| `createFirebaseJsAuth(config, storage)` | The JS SDK's Auth with RN persistence (`getReactNativePersistence` read off the module, since only the RN build has it), null with no API key. |
+| `reversedGoogleClientId(id)` (in `oauth/`) | `<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`. Derived, never a second env variable — it drifted. |
+
+Platform-neutral on purpose: no `react-native` import, no native package, so it resolves the
+same under Metro, Vite and Vitest, and the tests drive it through fake bridges.
+
 ### Firebase Proxy Lives in `di`, Not Here
 The China reverse-proxy core moved to `@sudobility/di` (`src/firebase/firebase-proxy.ts`)
 because it covers Analytics, Remote Config and Installations, not just Auth. `auth_lib`
