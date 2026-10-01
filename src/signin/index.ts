@@ -9,3 +9,4 @@
 export * from './config';
 export * from './credentials';
 export * from './firebase-js-auth';
+export * from './firebase-config';

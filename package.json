@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.102",
+  "version": "0.0.103",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,10 +23,6 @@
       "import": "./dist/signin/index.js",
       "types": "./dist/signin/index.d.ts"
     },
-    "./build/firebase-service-config": {
-      "require": "./build/firebase-service-config.cjs",
-      "default": "./build/firebase-service-config.cjs"
-    },
     "./account": {
       "import": "./dist/account/index.js",
       "types": "./dist/account/index.d.ts"
@@ -42,7 +38,6 @@
   },
   "files": [
     "dist",
-    "build/firebase-service-config.cjs",
     "README.md"
   ],
   "scripts": {
@@ -78,7 +73,6 @@
     }
   },
   "devDependencies": {
-    "@babel/core": "^7",
     "@eslint/js": "^9.0.0",
     "@sudobility/di": "^1.5.67",
     "@sudobility/types": "^1.9.68",

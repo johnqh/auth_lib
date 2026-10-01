@@ -164,19 +164,22 @@ native SDKs' connections never pass through it. Reference consumer: `music_app_r
 Platform-neutral on purpose: no `react-native` import, no native package, so it resolves the
 same under Metro, Vite and Vitest, and the tests drive it through fake bridges.
 
-### Firebase config from the services files (`build/firebase-service-config.cjs`)
-A build-time helper, not part of the runtime library: an RN app's `babel.config.js` requires
-`@sudobility/auth_lib/build/firebase-service-config` and adds
-`firebaseServiceConfigPlugin(api, { ios, android, androidPackage })` to its plugins. Under Metro it reads
-the platform's services file — `GoogleService-Info.plist` on iOS, **and on macOS and Windows** (a desktop
-signs in with the iOS-type client), `google-services.json` on Android, picking the client registered to
-`androidPackage` — and inlines `process.env.FIREBASE_*`, `GOOGLE_OAUTH_CLIENT_ID` and
-`GOOGLE_WEB_CLIENT_ID` as literals for the JS SDK. `FIREBASE_AUTH_DOMAIN` is derived as
-`<project>.firebaseapp.com`. Each platform gets its own app's API key and app id; the Auth API accepts
-them from the JS SDK (checked for every app in the family). With no platform (jest) every name becomes
-`undefined`, so the code's defaults apply. **The helper reads only the files the app names — no
-environment.** Plain CommonJS so a babel config can `require` it; tested through a real Babel transform
-(`src/build/`).
+### Firebase configuration, by where an app runs (`signin/firebase-config.ts`)
+`useFirebaseAuthJs` initialises the JS SDK (auth, every platform) once, through `loadFirebaseJsAuth(config)` —
+exported so code outside React reads the same instance.
+- **iOS and Android — the Google services files, never env.** The app passes `platform` and `serviceFiles:
+  { nativeFirebaseOptions: () => require('@react-native-firebase/app').getApp().options, googleServicesJson:
+  require('../android/app/google-services.json') }`. Native Firebase reads `GoogleService-Info.plist` /
+  `google-services.json` at launch (they are bundled and safe in git: each names the bundle ID, and the native SDK
+  checks the running app matches); the JS SDK is configured from its options. iOS's Google client is the options'
+  `clientId`; Android's web client (what makes Google return an ID token) is read from `google-services.json`.
+- **The web, macOS and Windows — a `FirebaseWebConfig` the app builds from its environment**, passed as
+  `firebaseConfig`: `{ apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId, measurementId }`,
+  Firebase's own `initializeApp` keys. Firebase has no desktop platform, so macOS and Windows are registered as web
+  apps, whose config carries no bundle ID. `projectId`, `storageBucket`, `messagingSenderId` are the project's;
+  `apiKey`, `authDomain` are shared by its web apps; `appId`, `measurementId` are each web app's own — so the web,
+  macOS and Windows differ only there.
+- **auth_lib reads no environment and names no native package**: values and modules are injected.
 
 ### Firebase Proxy Lives in `di`, Not Here
 The China reverse-proxy core moved to `@sudobility/di` (`src/firebase/firebase-proxy.ts`)

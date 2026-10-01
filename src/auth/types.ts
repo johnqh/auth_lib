@@ -7,6 +7,10 @@
 import type { OAuthClientConfig, WebAuthBridge } from '../oauth/webAuthFlow';
 import type { SignInConfig, SignInPlatform } from '../signin/config';
 import type {
+  FirebaseWebConfig,
+  ServiceFileSources,
+} from '../signin/firebase-config';
+import type {
   AppleAuthAndroidBridge,
   AppleAuthBridge,
   GoogleSignInBridge,
@@ -67,8 +71,11 @@ export type AppleAuthAndroidLike = AppleAuthAndroidBridge;
  * the JS-SDK (desktop/web) vs native variant; unused ones are ignored.
  */
 export interface FirebaseAuthConfig {
-  /** JS-SDK only: Firebase web config object (`apiKey`, `authDomain`, …). */
-  firebaseConfig?: Record<string, unknown>;
+  /**
+   * The web, macOS and Windows: this web app's Firebase configuration, which
+   * the app builds from its environment (iOS and Android use `serviceFiles`).
+   */
+  firebaseConfig?: FirebaseWebConfig;
   /** JS-SDK only: AsyncStorage instance for RN persistence (injected). */
   asyncStorage?: unknown;
   /**
@@ -84,6 +91,13 @@ export interface FirebaseAuthConfig {
    */
   platform?: SignInPlatform;
   signIn?: SignInConfig;
+  /**
+   * iOS and Android: read Firebase's configuration — and the Google sign-in
+   * client id — from the app's Google services files (see
+   * `signin/firebase-config`); `firebaseConfig` is not used there. The web,
+   * macOS and Windows pass `firebaseConfig`, a FirebaseWebConfig, instead.
+   */
+  serviceFiles?: ServiceFileSources;
   /** Desktop Google PKCE config (`clientId` + `reversedClientId`). */
   googleOAuth?: OAuthClientConfig;
   /** Injected system-browser bridge for desktop Google PKCE. */

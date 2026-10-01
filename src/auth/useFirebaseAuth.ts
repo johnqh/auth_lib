@@ -27,6 +27,10 @@ import {
   type PersistenceStorage,
 } from '../signin/firebase-js-auth';
 import {
+  loadServiceFileFirebaseConfig,
+  type ServiceFileFirebaseConfig,
+} from '../signin/firebase-config';
+import {
   type AuthContextValue,
   type AuthUser,
   DEFAULT_REFRESH_INTERVAL_MS,
@@ -34,30 +38,78 @@ import {
 } from './types';
 
 let firebaseAuth: Auth | null = null;
+let authPromise: Promise<Auth | null> | null = null;
+/** What the services files said, once read (React Native only). */
+let serviceFileConfig: ServiceFileFirebaseConfig | null = null;
 
-function resolveAuth(config: FirebaseAuthConfig): Auth | null {
-  const firebaseConfig = config.firebaseConfig;
-  if (!firebaseConfig || !firebaseConfig.apiKey) return null;
-  if (!firebaseAuth) {
+/**
+ * The app's one Firebase Auth, initialised once.
+ *
+ * iOS and Android (`serviceFiles` set): configured from the app's Google
+ * services files, through native Firebase's options. The web, macOS and
+ * Windows: from the `firebaseConfig` the app passes — a FirebaseWebConfig
+ * built from its environment (see `signin/firebase-config`).
+ * Null with nothing to configure from, which is a supported state — a
+ * local-only build, no sign-in.
+ *
+ * Exported so code outside React (a document store's token getter) reads the
+ * same instance the hook does, whichever asks first.
+ */
+export function loadFirebaseJsAuth(
+  config: FirebaseAuthConfig
+): Promise<Auth | null> {
+  if (authPromise) return authPromise;
+  const storage =
+    (config.asyncStorage as PersistenceStorage | undefined) ?? null;
+  authPromise = (async () => {
+    if (
+      (config.platform === 'ios' || config.platform === 'android') &&
+      config.serviceFiles
+    ) {
+      serviceFileConfig = await loadServiceFileFirebaseConfig(
+        config.serviceFiles
+      );
+      if (!serviceFileConfig?.firebase.apiKey) return null;
+      firebaseAuth = createFirebaseJsAuth(serviceFileConfig.firebase, storage);
+      return firebaseAuth;
+    }
+    const firebaseConfig = config.firebaseConfig;
+    if (!firebaseConfig || !firebaseConfig.apiKey) return null;
     firebaseAuth = createFirebaseJsAuth(
       firebaseConfig as FirebaseJsAuthConfig,
-      (config.asyncStorage as PersistenceStorage | undefined) ?? null
+      storage
     );
-  }
-  return firebaseAuth;
+    return firebaseAuth;
+  })().catch(error => {
+    // A config that cannot be read is a build that cannot sign in, not a
+    // crash; and the next call may try again.
+    console.error('[Auth] Could not configure Firebase:', error);
+    authPromise = null;
+    return null;
+  });
+  return authPromise;
 }
 
-/** The client ids for `signin/`, from `signIn` or the legacy fields. */
+/**
+ * The client ids for `signin/`: the services files' Google clients where they
+ * were read, over whatever the app passed; Apple's always the app's.
+ */
 function signInConfigOf(cfg: FirebaseAuthConfig) {
-  return (
-    cfg.signIn ?? {
-      googleIosClientId:
-        cfg.googleOAuth?.clientId ?? cfg.googleNative?.iosClientId ?? '',
-      googleWebClientId: cfg.googleNative?.webClientId ?? '',
-      appleServiceId: cfg.appleAndroid?.serviceId ?? '',
-      appleRedirectUri: cfg.appleAndroid?.redirectUri ?? '',
-    }
-  );
+  const base = cfg.signIn ?? {
+    googleIosClientId:
+      cfg.googleOAuth?.clientId ?? cfg.googleNative?.iosClientId ?? '',
+    googleWebClientId: cfg.googleNative?.webClientId ?? '',
+    appleServiceId: cfg.appleAndroid?.serviceId ?? '',
+    appleRedirectUri: cfg.appleAndroid?.redirectUri ?? '',
+  };
+  if (!serviceFileConfig) return base;
+  return {
+    ...base,
+    googleIosClientId:
+      serviceFileConfig.googleIosClientId || base.googleIosClientId,
+    googleWebClientId:
+      serviceFileConfig.googleWebClientId || base.googleWebClientId,
+  };
 }
 
 function toAuthUser(firebaseUser: User | null): AuthUser | null {
@@ -90,53 +142,60 @@ export function useFirebaseAuthJs(
 
   useEffect(() => {
     const cfg = configRef.current;
-    const auth = resolveAuth(cfg);
+    let unsubscribe: (() => void) | null = null;
+    let cancelled = false;
     cfg.onInit?.();
-    if (!auth) {
-      setIsLoading(false);
-      setIsReady(true);
-      return;
-    }
+    void loadFirebaseJsAuth(cfg).then(auth => {
+      if (cancelled) return;
+      if (!auth) {
+        setIsLoading(false);
+        setIsReady(true);
+        return;
+      }
 
-    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
-      if (!firebaseUser && configRef.current.autoSignInAnonymously) {
-        try {
-          await firebaseSignInAnonymously(auth);
-        } catch (error) {
-          console.error('[Auth] Anonymous sign-in failed:', error);
-          setIsLoading(false);
-          setIsReady(true);
+      unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+        if (!firebaseUser && configRef.current.autoSignInAnonymously) {
+          try {
+            await firebaseSignInAnonymously(auth);
+          } catch (error) {
+            console.error('[Auth] Anonymous sign-in failed:', error);
+            setIsLoading(false);
+            setIsReady(true);
+          }
+          return; // listener re-fires with the anonymous user
         }
-        return; // listener re-fires with the anonymous user
-      }
 
-      const mapped = toAuthUser(firebaseUser);
-      const nextUid = mapped?.uid ?? null;
-      if (prevUidRef.current !== nextUid) {
-        configRef.current.onIdentityChange?.(prevUidRef.current, nextUid);
-        prevUidRef.current = nextUid;
-      }
+        const mapped = toAuthUser(firebaseUser);
+        const nextUid = mapped?.uid ?? null;
+        if (prevUidRef.current !== nextUid) {
+          configRef.current.onIdentityChange?.(prevUidRef.current, nextUid);
+          prevUidRef.current = nextUid;
+        }
 
-      setUser(mapped);
-      setRawUser(firebaseUser);
-      configRef.current.onUserChanged?.(mapped);
+        setUser(mapped);
+        setRawUser(firebaseUser);
+        configRef.current.onUserChanged?.(mapped);
 
-      if (firebaseUser) {
-        try {
-          setToken(await firebaseUser.getIdToken());
-        } catch (error) {
-          console.error('[Auth] Error getting ID token:', error);
+        if (firebaseUser) {
+          try {
+            setToken(await firebaseUser.getIdToken());
+          } catch (error) {
+            console.error('[Auth] Error getting ID token:', error);
+            setToken(null);
+          }
+        } else {
           setToken(null);
         }
-      } else {
-        setToken(null);
-      }
 
-      setIsLoading(false);
-      setIsReady(true);
+        setIsLoading(false);
+        setIsReady(true);
+      });
     });
 
-    return unsubscribe;
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -152,8 +211,8 @@ export function useFirebaseAuthJs(
     return () => clearInterval(refreshInterval);
   }, [rawUser]);
 
-  const requireAuth = useCallback((): Auth => {
-    const auth = resolveAuth(configRef.current);
+  const requireAuth = useCallback(async (): Promise<Auth> => {
+    const auth = await loadFirebaseJsAuth(configRef.current);
     if (!auth) throw new Error('Firebase not configured');
     return auth;
   }, []);
@@ -171,7 +230,7 @@ export function useFirebaseAuthJs(
 
   const signInWithGoogle = useCallback(async () => {
     requireProvider('google');
-    const auth = requireAuth();
+    const auth = await requireAuth();
     const cfg = configRef.current;
     setIsLoading(true);
     try {
@@ -200,7 +259,7 @@ export function useFirebaseAuthJs(
 
   const signInWithApple = useCallback(async () => {
     requireProvider('apple');
-    const auth = requireAuth();
+    const auth = await requireAuth();
     const cfg = configRef.current;
     if (cfg.platform) {
       setIsLoading(true);
@@ -244,7 +303,7 @@ export function useFirebaseAuthJs(
 
   const signInAnonymously = useCallback(async () => {
     requireProvider('anonymous');
-    const auth = requireAuth();
+    const auth = await requireAuth();
     setIsLoading(true);
     try {
       await firebaseSignInAnonymously(auth);
@@ -256,7 +315,7 @@ export function useFirebaseAuthJs(
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
       requireProvider('emailPassword');
-      const auth = requireAuth();
+      const auth = await requireAuth();
       setIsLoading(true);
       try {
         await signInWithEmailAndPassword(auth, email, password);
@@ -270,7 +329,7 @@ export function useFirebaseAuthJs(
   const signUpWithEmail = useCallback(
     async (email: string, password: string) => {
       requireProvider('emailPassword');
-      const auth = requireAuth();
+      const auth = await requireAuth();
       setIsLoading(true);
       try {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -282,7 +341,7 @@ export function useFirebaseAuthJs(
   );
 
   const signOut = useCallback(async () => {
-    const auth = resolveAuth(configRef.current);
+    const auth = await loadFirebaseJsAuth(configRef.current);
     if (!auth) return;
     setIsLoading(true);
     try {
@@ -293,7 +352,7 @@ export function useFirebaseAuthJs(
   }, []);
 
   const sendPasswordResetEmail = useCallback(async (email: string) => {
-    const auth = resolveAuth(configRef.current);
+    const auth = await loadFirebaseJsAuth(configRef.current);
     if (!auth) throw new Error('Firebase not configured');
     await firebaseSendPasswordResetEmail(auth, email);
   }, []);
