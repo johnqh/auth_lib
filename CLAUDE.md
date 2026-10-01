@@ -230,6 +230,7 @@ CI/CD is handled via GitHub Actions using a shared workflow (`johnqh/workflows/.
 ### Key Dev Dependencies
 | Package | Version | Purpose |
 |---|---|---|
+| `firebase` | ^12.7.0 | **Also a dev dependency, on purpose.** Optional for consumers, but `src/oauth`, `src/signin` and `src/config` import its types, so `tsc` needs it installed. Removing it from the lock as "peer-only" (0.0.98) made every CI run fail at typecheck and left npm stuck at 0.0.97 while pushes reported success locally. A library declares peer + dev; never drop the dev half of a peer it compiles against. |
 | `typescript` | ~5.9.3 | TypeScript compiler |
 | `vitest` | ^4.0.4 | Test runner |
 | `eslint` | ^9.0.0 | Linter (flat config) |
