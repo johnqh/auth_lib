@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.101",
+  "version": "0.0.102",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,6 +23,10 @@
       "import": "./dist/signin/index.js",
       "types": "./dist/signin/index.d.ts"
     },
+    "./build/firebase-service-config": {
+      "require": "./build/firebase-service-config.cjs",
+      "default": "./build/firebase-service-config.cjs"
+    },
     "./account": {
       "import": "./dist/account/index.js",
       "types": "./dist/account/index.d.ts"
@@ -38,6 +42,7 @@
   },
   "files": [
     "dist",
+    "build/firebase-service-config.cjs",
     "README.md"
   ],
   "scripts": {
@@ -73,22 +78,23 @@
     }
   },
   "devDependencies": {
-    "firebase": "^12.7.0",
+    "@babel/core": "^7",
+    "@eslint/js": "^9.0.0",
     "@sudobility/di": "^1.5.67",
     "@sudobility/types": "^1.9.68",
     "@tanstack/react-query": "^5.80.7",
-    "@types/node": "^22.0.0",
-    "vitest": "^4.0.4",
-    "@eslint/js": "^9.0.0",
     "@types/bun": "^1.2.8",
+    "@types/node": "^22.0.0",
     "@types/react": "^19.2.5",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "firebase": "^12.7.0",
     "prettier": "^3.0.0",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "vitest": "^4.0.4"
   },
   "publishConfig": {
     "access": "public"

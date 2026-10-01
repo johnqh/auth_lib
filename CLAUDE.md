@@ -164,6 +164,20 @@ native SDKs' connections never pass through it. Reference consumer: `music_app_r
 Platform-neutral on purpose: no `react-native` import, no native package, so it resolves the
 same under Metro, Vite and Vitest, and the tests drive it through fake bridges.
 
+### Firebase config from the services files (`build/firebase-service-config.cjs`)
+A build-time helper, not part of the runtime library: an RN app's `babel.config.js` requires
+`@sudobility/auth_lib/build/firebase-service-config` and adds
+`firebaseServiceConfigPlugin(api, { ios, android, androidPackage })` to its plugins. Under Metro it reads
+the platform's services file — `GoogleService-Info.plist` on iOS, **and on macOS and Windows** (a desktop
+signs in with the iOS-type client), `google-services.json` on Android, picking the client registered to
+`androidPackage` — and inlines `process.env.FIREBASE_*`, `GOOGLE_OAUTH_CLIENT_ID` and
+`GOOGLE_WEB_CLIENT_ID` as literals for the JS SDK. `FIREBASE_AUTH_DOMAIN` is derived as
+`<project>.firebaseapp.com`. Each platform gets its own app's API key and app id; the Auth API accepts
+them from the JS SDK (checked for every app in the family). With no platform (jest) every name becomes
+`undefined`, so the code's defaults apply. **The helper reads only the files the app names — no
+environment.** Plain CommonJS so a babel config can `require` it; tested through a real Babel transform
+(`src/build/`).
+
 ### Firebase Proxy Lives in `di`, Not Here
 The China reverse-proxy core moved to `@sudobility/di` (`src/firebase/firebase-proxy.ts`)
 because it covers Analytics, Remote Config and Installations, not just Auth. `auth_lib`
