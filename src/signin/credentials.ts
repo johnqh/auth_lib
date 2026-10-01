@@ -33,26 +33,31 @@ import {
 /** `GoogleSignin` from `@react-native-google-signin/google-signin`. */
 export interface GoogleSignInBridge {
   configure(params: { iosClientId?: string; webClientId?: string }): void;
-  hasPlayServices(): Promise<boolean>;
+  hasPlayServices(options?: Record<string, unknown>): Promise<boolean>;
   signIn(): Promise<{ type: string; data: { idToken: string | null } | null }>;
 }
 
+/*
+  The enum-valued members default to `any` on purpose: a bridge instantiated
+  with `unknown` is not assignable FROM the real module (its `performRequest`
+  takes the enum, and `unknown` is not one), which is exactly the check an
+  app's `getAppleAuth: () => appleAuth` has to pass. Inferred at a call site,
+  the real enums flow through; written as a plain field type, `any` lets the
+  real module in and the tests' string enums too.
+*/
 /** `appleAuth` from `@invertase/react-native-apple-authentication` (iOS). */
-export interface AppleAuthBridge<Operation = unknown, Scope = unknown> {
+export interface AppleAuthBridge<Operation = any, Scope = any> {
   Operation: { LOGIN: Operation };
   Scope: { EMAIL: Scope; FULL_NAME: Scope };
   Error: { CANCELED: string };
   performRequest(options: {
     requestedOperation: Operation;
     requestedScopes: Scope[];
-  }): Promise<{ identityToken: string | null; nonce?: string | null }>;
+  }): Promise<{ identityToken: string | null; nonce?: string }>;
 }
 
 /** `appleAuthAndroid` from the same module. */
-export interface AppleAuthAndroidBridge<
-  ResponseType = unknown,
-  Scope = unknown,
-> {
+export interface AppleAuthAndroidBridge<ResponseType = any, Scope = any> {
   isSupported: boolean;
   ResponseType: { ALL: ResponseType };
   Scope: { ALL: Scope };
@@ -66,6 +71,9 @@ export interface AppleAuthAndroidBridge<
   signIn(): Promise<{ id_token?: string; nonce?: string }>;
 }
 
+/** A module handed over directly, or fetched — `require` or `import()`. */
+export type ModuleGetter<T> = () => T | Promise<T>;
+
 /**
  * What the platform's Google sign-in needs. The desktops need the browser
  * bridge; iOS and Android need Google's SDK. An app hands over whichever it
@@ -73,17 +81,12 @@ export interface AppleAuthAndroidBridge<
  */
 export interface GoogleSignInModules {
   webAuth?: WebAuthBridge;
-  googleSignIn?: () => GoogleSignInBridge;
+  googleSignIn?: ModuleGetter<GoogleSignInBridge>;
 }
 
-export interface AppleSignInModules<
-  Operation = unknown,
-  Scope = unknown,
-  ResponseType = unknown,
-  AndroidScope = unknown,
-> {
-  appleAuth?: () => AppleAuthBridge<Operation, Scope>;
-  appleAuthAndroid?: () => AppleAuthAndroidBridge<ResponseType, AndroidScope>;
+export interface AppleSignInModules {
+  appleAuth?: ModuleGetter<AppleAuthBridge>;
+  appleAuthAndroid?: ModuleGetter<AppleAuthAndroidBridge>;
 }
 
 function missing(what: string): never {
@@ -109,7 +112,9 @@ export async function googleCredential(
       webAuth
     );
   }
-  const GoogleSignin = (modules.googleSignIn ?? missing('GoogleSignin'))();
+  const GoogleSignin = await (
+    modules.googleSignIn ?? missing('GoogleSignin')
+  )();
   // `iosClientId` is always given on iOS: without it the module goes looking
   // for a `GoogleService-Info.plist` in the bundle, which an app on the JS
   // SDK has no other reason to ship.
@@ -127,18 +132,13 @@ export async function googleCredential(
 }
 
 /** Apple's credential, or null when the user closed the sheet. */
-export async function appleCredential<
-  Operation,
-  Scope,
-  ResponseType,
-  AndroidScope,
->(
+export async function appleCredential(
   platform: SignInPlatform,
   config: SignInConfig,
-  modules: AppleSignInModules<Operation, Scope, ResponseType, AndroidScope>
+  modules: AppleSignInModules
 ): Promise<OAuthCredential | null> {
   if (platform === 'android') {
-    const appleAuthAndroid = (
+    const appleAuthAndroid = await (
       modules.appleAuthAndroid ?? missing('appleAuthAndroid')
     )();
     if (!appleAuthAndroid.isSupported) {
@@ -164,7 +164,7 @@ export async function appleCredential<
       throw error;
     }
   }
-  const appleAuth = (modules.appleAuth ?? missing('appleAuth'))();
+  const appleAuth = await (modules.appleAuth ?? missing('appleAuth'))();
   try {
     const response = await appleAuth.performRequest({
       requestedOperation: appleAuth.Operation.LOGIN,

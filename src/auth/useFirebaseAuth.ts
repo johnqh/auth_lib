@@ -7,17 +7,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import {
   type Auth,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   signInAnonymously as firebaseSignInAnonymously,
   signOut as firebaseSignOut,
-  getAuth,
-  // @ts-expect-error – getReactNativePersistence is exported at runtime
-  getReactNativePersistence,
-  initializeAuth,
   onAuthStateChanged,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -25,6 +20,12 @@ import {
 } from 'firebase/auth';
 import { signInWithGoogleOAuthDesktop } from '../oauth/google';
 import { buildAppleCredential } from '../oauth/credentials';
+import { appleCredential, googleCredential } from '../signin/credentials';
+import {
+  createFirebaseJsAuth,
+  type FirebaseJsAuthConfig,
+  type PersistenceStorage,
+} from '../signin/firebase-js-auth';
 import {
   type AuthContextValue,
   type AuthUser,
@@ -32,21 +33,31 @@ import {
   type FirebaseAuthConfig,
 } from './types';
 
-let app: FirebaseApp | null = null;
 let firebaseAuth: Auth | null = null;
 
 function resolveAuth(config: FirebaseAuthConfig): Auth | null {
   const firebaseConfig = config.firebaseConfig;
   if (!firebaseConfig || !firebaseConfig.apiKey) return null;
   if (!firebaseAuth) {
-    app = getApps()[0] ?? initializeApp(firebaseConfig);
-    firebaseAuth = config.asyncStorage
-      ? initializeAuth(app, {
-          persistence: getReactNativePersistence(config.asyncStorage),
-        })
-      : getAuth(app);
+    firebaseAuth = createFirebaseJsAuth(
+      firebaseConfig as FirebaseJsAuthConfig,
+      (config.asyncStorage as PersistenceStorage | undefined) ?? null
+    );
   }
   return firebaseAuth;
+}
+
+/** The client ids for `signin/`, from `signIn` or the legacy fields. */
+function signInConfigOf(cfg: FirebaseAuthConfig) {
+  return (
+    cfg.signIn ?? {
+      googleIosClientId:
+        cfg.googleOAuth?.clientId ?? cfg.googleNative?.iosClientId ?? '',
+      googleWebClientId: cfg.googleNative?.webClientId ?? '',
+      appleServiceId: cfg.appleAndroid?.serviceId ?? '',
+      appleRedirectUri: cfg.appleAndroid?.redirectUri ?? '',
+    }
+  );
 }
 
 function toAuthUser(firebaseUser: User | null): AuthUser | null {
@@ -162,17 +173,25 @@ export function useFirebaseAuthJs(
     requireProvider('google');
     const auth = requireAuth();
     const cfg = configRef.current;
-    if (!cfg.googleOAuth || !cfg.webAuth) {
-      throw new Error(
-        'Google desktop sign-in requires googleOAuth + webAuth config'
-      );
-    }
     setIsLoading(true);
     try {
-      const credential = await signInWithGoogleOAuthDesktop(
-        cfg.googleOAuth,
-        cfg.webAuth
-      );
+      let credential;
+      if (cfg.platform) {
+        credential = await googleCredential(cfg.platform, signInConfigOf(cfg), {
+          ...(cfg.webAuth ? { webAuth: cfg.webAuth } : {}),
+          ...(cfg.getGoogleSignin ? { googleSignIn: cfg.getGoogleSignin } : {}),
+        });
+      } else {
+        if (!cfg.googleOAuth || !cfg.webAuth) {
+          throw new Error(
+            'Google desktop sign-in requires googleOAuth + webAuth config'
+          );
+        }
+        credential = await signInWithGoogleOAuthDesktop(
+          cfg.googleOAuth,
+          cfg.webAuth
+        );
+      }
       if (credential) await signInWithCredential(auth, credential);
     } finally {
       setIsLoading(false);
@@ -183,6 +202,25 @@ export function useFirebaseAuthJs(
     requireProvider('apple');
     const auth = requireAuth();
     const cfg = configRef.current;
+    if (cfg.platform) {
+      setIsLoading(true);
+      try {
+        const credential = await appleCredential(
+          cfg.platform,
+          signInConfigOf(cfg),
+          {
+            ...(cfg.getAppleAuth ? { appleAuth: cfg.getAppleAuth } : {}),
+            ...(cfg.getAppleAuthAndroid
+              ? { appleAuthAndroid: cfg.getAppleAuthAndroid }
+              : {}),
+          }
+        );
+        if (credential) await signInWithCredential(auth, credential);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     if (!cfg.getAppleAuth)
       throw new Error('Apple sign-in requires getAppleAuth config');
     setIsLoading(true);
@@ -196,7 +234,7 @@ export function useFirebaseAuthJs(
         throw new Error('No identity token from Apple');
       const credential = buildAppleCredential({
         idToken: response.identityToken,
-        rawNonce: response.nonce,
+        ...(response.nonce ? { rawNonce: response.nonce } : {}),
       });
       await signInWithCredential(auth, credential);
     } finally {

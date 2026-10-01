@@ -20,10 +20,12 @@ import {
   type Persistence,
 } from 'firebase/auth';
 
+/** Firebase's web config: the API key and whatever else the app has. */
 export interface FirebaseJsAuthConfig {
   apiKey: string;
-  authDomain: string;
-  projectId: string;
+  authDomain?: string;
+  projectId?: string;
+  [option: string]: unknown;
 }
 
 /** `AsyncStorage`, or anything with its shape. */
@@ -49,22 +51,18 @@ export interface PersistenceStorage {
  */
 export function createFirebaseJsAuth(
   config: FirebaseJsAuthConfig,
-  storage: PersistenceStorage
+  storage: PersistenceStorage | null
 ): Auth | null {
   if (!config.apiKey) return null;
   const existing = getApps()[0];
   if (existing) return getAuth(existing);
-  const app: FirebaseApp = initializeApp({
-    apiKey: config.apiKey,
-    authDomain: config.authDomain,
-    projectId: config.projectId,
-  });
+  const app: FirebaseApp = initializeApp(config);
   const persistenceFor = (
     firebaseAuthModule as unknown as {
       getReactNativePersistence?: (storage: PersistenceStorage) => Persistence;
     }
   ).getReactNativePersistence;
-  return persistenceFor
+  return persistenceFor && storage
     ? initializeAuth(app, { persistence: persistenceFor(storage) })
     : getAuth(app);
 }

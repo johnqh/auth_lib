@@ -159,6 +159,8 @@ native SDKs' connections never pass through it. Reference consumer: `music_app_r
 | `createFirebaseJsAuth(config, storage)` | The JS SDK's Auth with RN persistence (`getReactNativePersistence` read off the module, since only the RN build has it), null with no API key. |
 | `reversedGoogleClientId(id)` (in `oauth/`) | `<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`. Derived, never a second env variable — it drifted. |
 
+**Account deletion has its own subpath, `@sudobility/auth_lib/account`** (`deleteAccount`, a plain backend call). An app on the JS SDK must not import it from the root: under Metro the root resolves to `index.rn.ts`, whose native Firebase init statically requires `@react-native-firebase/auth` — which such an app no longer installs, so the bundle fails to resolve. It only ever worked while a stale copy of that package sat in `node_modules`.
+
 Platform-neutral on purpose: no `react-native` import, no native package, so it resolves the
 same under Metro, Vite and Vitest, and the tests drive it through fake bridges.
 

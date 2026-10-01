@@ -5,6 +5,13 @@
  */
 
 import type { OAuthClientConfig, WebAuthBridge } from '../oauth/webAuthFlow';
+import type { SignInConfig, SignInPlatform } from '../signin/config';
+import type {
+  AppleAuthAndroidBridge,
+  AppleAuthBridge,
+  GoogleSignInBridge,
+  ModuleGetter,
+} from '../signin/credentials';
 
 /** Serialisable subset of the Firebase user consumed by app components. */
 export interface AuthUser {
@@ -47,36 +54,13 @@ export interface AuthProvidersConfig {
 }
 
 /**
- * Minimal shape of `@react-native-google-signin/google-signin`'s default
- * export that the native hook uses. Injected so auth_lib carries no native dep.
+ * The native sign-in modules, as the narrow bridges `signin/` defines — one
+ * vocabulary for the JS-SDK and native hooks. Injected so auth_lib carries
+ * no native dependency.
  */
-export interface GoogleSigninLike {
-  configure(options: Record<string, unknown>): void;
-  hasPlayServices(options?: Record<string, unknown>): Promise<boolean>;
-  signIn(): Promise<{
-    type?: string;
-    data?: { idToken?: string | null } | null;
-  }>;
-}
-
-/** Minimal shape of `@invertase/react-native-apple-authentication`'s iOS API. */
-export interface AppleAuthLike {
-  performRequest(
-    options: unknown
-  ): Promise<{ identityToken: string | null; nonce: string }>;
-  Operation: { LOGIN: unknown };
-  Scope: { EMAIL: unknown; FULL_NAME: unknown };
-}
-
-/** Minimal shape of the Android web Apple API (`appleAuthAndroid`). */
-export interface AppleAuthAndroidLike {
-  isSupported: boolean;
-  // Native SDK option bag (AndroidConfig); typed loose to accept the real module.
-  configure(options: any): void;
-  signIn(): Promise<{ id_token?: string; nonce?: string }>;
-  ResponseType: { ALL: unknown };
-  Scope: { ALL: unknown };
-}
+export type GoogleSigninLike = GoogleSignInBridge;
+export type AppleAuthLike = AppleAuthBridge;
+export type AppleAuthAndroidLike = AppleAuthAndroidBridge;
 
 /**
  * Config for the shared Firebase-auth hooks. Fields are consumed selectively by
@@ -87,18 +71,31 @@ export interface FirebaseAuthConfig {
   firebaseConfig?: Record<string, unknown>;
   /** JS-SDK only: AsyncStorage instance for RN persistence (injected). */
   asyncStorage?: unknown;
+  /**
+   * JS SDK on every platform — the fleet's layout since the China proxy,
+   * a `fetch` wrapper, covers the JS SDK on a phone and the native SDK never.
+   * With `platform` set, `signInWithGoogle` and `signInWithApple` go through
+   * `signin/` (`googleCredential`/`appleCredential`): Google's SDK on iOS and
+   * Android, the system browser on the desktops, Apple's sheet on iOS and
+   * Apple's web flow on Android — each borrowed for an ID token that the JS
+   * SDK's `signInWithCredential` takes. `signIn` holds the client ids; the
+   * module getters below supply the modules. Without `platform`, the hook is
+   * the desktop-only one it was (`googleOAuth` + `webAuth`).
+   */
+  platform?: SignInPlatform;
+  signIn?: SignInConfig;
   /** Desktop Google PKCE config (`clientId` + `reversedClientId`). */
   googleOAuth?: OAuthClientConfig;
   /** Injected system-browser bridge for desktop Google PKCE. */
   webAuth?: WebAuthBridge;
-  /** Native Google client ids for `GoogleSignin.configure`. */
+  /** Native Google client ids for `GoogleSignin.configure` (native hook). */
   googleNative?: { webClientId?: string; iosClientId?: string };
-  /** Native Google Sign-In module getter. */
-  getGoogleSignin?: () => Promise<GoogleSigninLike>;
+  /** Native Google Sign-In module getter — `require`d or `import()`ed. */
+  getGoogleSignin?: ModuleGetter<GoogleSigninLike>;
   /** Native (iOS/macOS) Apple module getter. */
-  getAppleAuth?: () => Promise<AppleAuthLike>;
-  /** Android web Apple module getter + config. */
-  getAppleAuthAndroid?: () => Promise<AppleAuthAndroidLike>;
+  getAppleAuth?: ModuleGetter<AppleAuthLike>;
+  /** Android web Apple module getter + config (native hook). */
+  getAppleAuthAndroid?: ModuleGetter<AppleAuthAndroidLike>;
   appleAndroid?: { serviceId: string; redirectUri: string };
   /** Which providers are enabled. Defaults: google + emailPassword on. */
   providers?: AuthProvidersConfig;
