@@ -92,6 +92,30 @@ describe('googleCredential', () => {
     );
   });
 
+  it('signs in on Windows with the Desktop-app client and a loopback redirect', async () => {
+    const authenticate = vi.fn(async () => null);
+    await googleCredential(
+      'windows',
+      {
+        ...CONFIG,
+        googleWindowsClientId: 'win-client.apps.googleusercontent.com',
+        googleWindowsClientSecret: 'win-secret',
+      },
+      {
+        webAuth: {
+          authenticate,
+          generateCodeVerifier: async () => 'VERIFIER',
+          sha256Base64Url: async () => 'CHALLENGE',
+        },
+      }
+    );
+    const url = String(authenticate.mock.calls[0]?.[0]);
+    expect(url).toContain('client_id=win-client.apps.googleusercontent.com');
+    // A placeholder the native side replaces with the port it bound.
+    expect(url).toContain(encodeURIComponent('http://127.0.0.1/callback'));
+    expect(url).not.toContain('client_secret');
+  });
+
   it('names the module it was not given', async () => {
     await expect(googleCredential('macos', CONFIG, {})).rejects.toThrow(
       'WebAuth'

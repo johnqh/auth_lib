@@ -16,6 +16,8 @@ import {
 
 const CONFIGURED: SignInConfig = {
   googleIosClientId: 'desktop-client.apps.googleusercontent.com',
+  googleWindowsClientId: 'windows-desktop-client.apps.googleusercontent.com',
+  googleWindowsClientSecret: 'windows-secret',
   googleWebClientId: 'web-client',
   appleServiceId: 'service',
   appleRedirectUri: 'https://example.com/apple',
@@ -58,11 +60,20 @@ describe('googleSignInAvailable', () => {
     // Not a Google client id: no redirect scheme can be derived, so the flow
     // would open Google and never come back.
     expect(
-      googleSignInAvailable('windows', {
+      googleSignInAvailable('macos', {
         ...CONFIGURED,
         googleIosClientId: 'desktop-client',
       })
     ).toBe(false);
+  });
+
+  it('needs the Desktop-app client on Windows, and nothing else', () => {
+    expect(
+      googleSignInAvailable('windows', { ...CONFIGURED, googleIosClientId: '' })
+    ).toBe(true);
+    const { googleWindowsClientId: _omit, ...noWindows } = CONFIGURED;
+    void _omit;
+    expect(googleSignInAvailable('windows', noWindows)).toBe(false);
   });
 
   it('is never offered on the web entry', () => {

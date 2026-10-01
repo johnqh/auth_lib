@@ -30,6 +30,25 @@ export interface OAuthClientConfig {
   redirectUri?: string;
   /** Explicit callback URL scheme (overrides `reversedClientId`). */
   callbackScheme?: string;
+  /**
+   * A "Desktop app" OAuth client's secret, sent with the token exchange.
+   * Google requires it for that client type even with PKCE, and documents
+   * it as not confidential in an installed app. Omit for an iOS-type client.
+   */
+  clientSecret?: string;
+}
+
+/**
+ * Whether a callback arrived on a loopback redirect (Windows): the system
+ * browser was sent to `http://127.0.0.1:<port>/…`, a port only the native
+ * side knew, so the redirect the token exchange must repeat is read back off
+ * the callback itself.
+ */
+function loopbackRedirectOf(callbackUrl: string): string | null {
+  const m = /^(http:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):\d+\/[^?#]*)/.exec(
+    callbackUrl
+  );
+  return m ? (m[1] as string) : null;
 }
 
 export interface OAuthTokenResponse {
@@ -47,6 +66,7 @@ async function exchangeCodeForTokens(
     code: string;
     codeVerifier: string;
     redirectUri: string;
+    clientSecret?: string;
   }
 ): Promise<OAuthTokenResponse> {
   const response = await fetch(provider.tokenEndpoint, {
@@ -61,6 +81,7 @@ async function exchangeCodeForTokens(
       code_verifier: args.codeVerifier,
       grant_type: 'authorization_code',
       redirect_uri: args.redirectUri,
+      ...(args.clientSecret ? { client_secret: args.clientSecret } : {}),
     }),
   });
   if (!response.ok) {
@@ -115,6 +136,9 @@ export async function signInWithOAuthPkce(
     clientId: config.clientId,
     code,
     codeVerifier,
-    redirectUri,
+    // The redirect Google actually used: on a loopback callback (Windows)
+    // the native side chose the port, so it is read back from the callback.
+    redirectUri: loopbackRedirectOf(callbackUrl) ?? redirectUri,
+    ...(config.clientSecret ? { clientSecret: config.clientSecret } : {}),
   });
 }

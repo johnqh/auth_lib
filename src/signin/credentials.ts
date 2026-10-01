@@ -102,7 +102,24 @@ export async function googleCredential(
   config: SignInConfig,
   modules: GoogleSignInModules
 ): Promise<OAuthCredential | null> {
+  if (platform === 'windows') {
+    // A loopback redirect and a "Desktop app" client: the native side picks
+    // the port and replaces this placeholder redirect with it.
+    const webAuth = modules.webAuth ?? missing('WebAuth');
+    return signInWithGoogleOAuthDesktop(
+      {
+        clientId: config.googleWindowsClientId ?? '',
+        redirectUri: 'http://127.0.0.1/callback',
+        callbackScheme: 'http',
+        ...(config.googleWindowsClientSecret
+          ? { clientSecret: config.googleWindowsClientSecret }
+          : {}),
+      },
+      webAuth
+    );
+  }
   if (isDesktopPlatform(platform)) {
+    // macOS: the iOS-type client, back through its reversed-id scheme.
     const webAuth = modules.webAuth ?? missing('WebAuth');
     return signInWithGoogleOAuthDesktop(
       {

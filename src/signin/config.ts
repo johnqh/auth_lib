@@ -4,8 +4,10 @@
  *
  * The rules are pure functions of the platform and the configuration, so an
  * app maps its own environment names onto `SignInConfig` (the family's are
- * `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID`, `APPLE_SERVICE_ID`,
- * `APPLE_REDIRECT_URI`) and asks. A button for a way that cannot work is
+ * `GOOGLE_OAUTH_CLIENT_ID_MACOS`, `GOOGLE_OAUTH_CLIENT_ID_WINDOWS`,
+ * `GOOGLE_OAUTH_CLIENT_SECRET_WINDOWS`, `APPLE_SERVICE_ID`,
+ * `APPLE_REDIRECT_URI`; iOS and Android read their Google clients from the
+ * services files) and asks. A button for a way that cannot work is
  * worse than no button: it is offered, pressed, and fails. So each is offered
  * only where the platform can do it *and* the build was given what it needs.
  */
@@ -18,11 +20,21 @@ export type SignInPlatform = 'ios' | 'android' | 'macos' | 'windows' | 'web';
 export interface SignInConfig {
   /**
    * The Firebase project's **iOS-type** OAuth client. Read on iOS (Google's
-   * SDK) and on macOS and Windows (the system-browser PKCE flow, whose
-   * redirect scheme is the client's reversed form, derived). On iOS its
-   * reversed form must also be a URL scheme in `Info.plist`.
+   * SDK) and on macOS (the system-browser PKCE flow, whose redirect scheme is
+   * the client's reversed form, derived). On iOS its reversed form must also
+   * be a URL scheme in `Info.plist`.
    */
   googleIosClientId: string;
+  /**
+   * Windows: a **"Desktop app"**-type OAuth client and its secret. Windows
+   * receives Google's redirect on a loopback address
+   * (`http://127.0.0.1:<port>/callback`), which Google accepts only for that
+   * client type — not the iOS-type client macOS uses — and that type sends
+   * its secret with the token exchange (not confidential in an installed
+   * app, per Google). Without the id, Windows offers no Google sign-in.
+   */
+  googleWindowsClientId?: string;
+  googleWindowsClientSecret?: string;
   /**
    * The project's **web-type** OAuth client. Read on Android only: Google's
    * Android SDK mints an ID token for a web client, never for the Android
@@ -48,7 +60,10 @@ export function googleSignInAvailable(
   platform: SignInPlatform,
   config: SignInConfig
 ): boolean {
-  if (isDesktopPlatform(platform) || platform === 'ios') {
+  if (platform === 'windows') {
+    return Boolean(config.googleWindowsClientId);
+  }
+  if (platform === 'macos' || platform === 'ios') {
     // Not merely non-empty: a client whose reversed form cannot be derived
     // has no redirect scheme, and the flow would open Google and never
     // come back.

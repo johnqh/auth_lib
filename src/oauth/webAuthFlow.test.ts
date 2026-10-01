@@ -113,4 +113,56 @@ describe('signInWithOAuthPkce', () => {
       signInWithOAuthPkce(GOOGLE_OAUTH_PROVIDER, CONFIG, bridge)
     ).rejects.toThrow(/Token exchange failed \(400\)/);
   });
+
+  it('exchanges a loopback callback with the redirect it arrived on, and the client secret', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: { body: string }) => ({
+      ok: true,
+      json: async () => ({
+        id_token: 'ID',
+        access_token: 'ACCESS',
+        expires_in: 3600,
+        token_type: 'Bearer',
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const bridge = makeBridge('http://127.0.0.1:50123/callback?code=THECODE');
+    await signInWithOAuthPkce(
+      GOOGLE_OAUTH_PROVIDER,
+      {
+        clientId: 'WIN',
+        redirectUri: 'http://127.0.0.1/callback',
+        callbackScheme: 'http',
+        clientSecret: 'SECRET',
+      },
+      bridge
+    );
+    const body = new URLSearchParams(
+      String(fetchMock.mock.calls[0]?.[1]?.body)
+    );
+    expect(body.get('redirect_uri')).toBe('http://127.0.0.1:50123/callback');
+    expect(body.get('client_secret')).toBe('SECRET');
+    expect(body.get('code')).toBe('THECODE');
+  });
+
+  it('sends no client secret for an iOS-type client, and keeps its scheme redirect', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: { body: string }) => ({
+      ok: true,
+      json: async () => ({
+        access_token: 'A',
+        expires_in: 1,
+        token_type: 'Bearer',
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    await signInWithOAuthPkce(
+      GOOGLE_OAUTH_PROVIDER,
+      CONFIG,
+      makeBridge('com.example.app:/oauth2callback?code=C')
+    );
+    const body = new URLSearchParams(
+      String(fetchMock.mock.calls[0]?.[1]?.body)
+    );
+    expect(body.get('redirect_uri')).toBe('com.example.app:/oauth2callback');
+    expect(body.has('client_secret')).toBe(false);
+  });
 });
