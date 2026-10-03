@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/auth_lib",
-  "version": "0.0.106",
+  "version": "0.0.107",
   "description": "Firebase authentication utilities with token refresh handling",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,32 +8,39 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "react-native": {
+        "types": "./dist/index.rn.d.ts",
         "import": "./dist/index.rn.js",
-        "types": "./dist/index.rn.d.ts"
+        "default": "./dist/index.rn.js"
       },
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "default": "./dist/index.js"
     },
     "./oauth": {
+      "types": "./dist/oauth/index.d.ts",
       "import": "./dist/oauth/index.js",
-      "types": "./dist/oauth/index.d.ts"
+      "default": "./dist/oauth/index.js"
     },
     "./signin": {
+      "types": "./dist/signin/index.d.ts",
       "import": "./dist/signin/index.js",
-      "types": "./dist/signin/index.d.ts"
+      "default": "./dist/signin/index.js"
     },
     "./account": {
+      "types": "./dist/account/index.d.ts",
       "import": "./dist/account/index.js",
-      "types": "./dist/account/index.d.ts"
+      "default": "./dist/account/index.js"
     },
     "./auth-js": {
+      "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.js",
-      "types": "./dist/auth/index.d.ts"
+      "default": "./dist/auth/index.js"
     },
     "./auth-native": {
+      "types": "./dist/auth/index.rn.d.ts",
       "import": "./dist/auth/index.rn.js",
-      "types": "./dist/auth/index.rn.d.ts"
+      "default": "./dist/auth/index.rn.js"
     }
   },
   "files": [

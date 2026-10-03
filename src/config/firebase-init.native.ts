@@ -8,6 +8,10 @@ import type { FirebaseInitResult } from './types.js';
 
 // Module state
 let firebaseAuth: any | null = null;
+// The module itself, kept from the one guarded `require` below. Metro resolves
+// every `require` it can see at bundle time, and only one inside a `try`
+// may name a package the app does not install.
+let authModule: any | null = null;
 let firebaseApp: any | null = null;
 let initialized = false;
 
@@ -18,8 +22,8 @@ function getAuthModule(): any | null {
   if (!firebaseAuth) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getAuth } = require('@react-native-firebase/auth');
-      firebaseAuth = getAuth();
+      authModule = require('@react-native-firebase/auth');
+      firebaseAuth = authModule.getAuth();
     } catch (e) {
       console.warn('[auth_lib] @react-native-firebase/auth not available:', e);
     }
@@ -69,9 +73,7 @@ export function initializeFirebaseAuth(): FirebaseInitResult {
 
   // Set up analytics user tracking on auth state changes
   if (!initialized) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { onAuthStateChanged } = require('@react-native-firebase/auth');
-    onAuthStateChanged(auth, (user: { uid: string } | null) => {
+    authModule.onAuthStateChanged(auth, (user: { uid: string } | null) => {
       try {
         const analyticsClient = getAnalyticsClient();
         if (user) {

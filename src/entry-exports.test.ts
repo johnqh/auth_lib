@@ -15,3 +15,11 @@ describe('entry exports', () => {
     expect(entry.SIGN_IN_CANCELLED_CODE).toBe('auth/user-cancelled');
   });
 });
+
+describe('signin subpath', () => {
+  it('exports the sign-in-cancelled helpers without native Firebase', async () => {
+    const signin = await import('./signin');
+    expect(typeof signin.isSignInCancelled).toBe('function');
+    expect(signin.SIGN_IN_CANCELLED_CODE).toBe('auth/user-cancelled');
+  });
+});
