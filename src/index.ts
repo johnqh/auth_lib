@@ -50,6 +50,9 @@ export {
   getFirebaseErrorCode,
   formatFirebaseError,
   isFirebaseAuthError,
+  isSignInCancelled,
+  signInCancelledError,
+  SIGN_IN_CANCELLED_CODE,
 } from './utils';
 
 // Network
