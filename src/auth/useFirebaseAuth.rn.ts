@@ -12,6 +12,10 @@ import {
   DEFAULT_REFRESH_INTERVAL_MS,
   type FirebaseAuthConfig,
 } from './types';
+import {
+  signInCancelledError,
+  withAppleCancel,
+} from '../utils/firebase-errors';
 
 /** Loosely-typed native Firebase user (avoids a compile-time RN-firebase dep). */
 interface NativeUser {
@@ -154,7 +158,8 @@ export function useFirebaseAuthNative(
       GoogleSignin.configure(googleConfig);
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
-      if (response.type === 'cancelled') return;
+      // Rejected, not resolved: a resolved sign-in reads as success.
+      if (response.type === 'cancelled') throw signInCancelledError();
       const idToken = response.data?.idToken;
       if (!idToken) throw new Error('No ID token from Google');
       const { getAuth, GoogleAuthProvider, signInWithCredential } = getRnAuth();
@@ -186,7 +191,7 @@ export function useFirebaseAuthNative(
           responseType: appleAuthAndroid.ResponseType.ALL,
           scope: appleAuthAndroid.Scope.ALL,
         });
-        const response = await appleAuthAndroid.signIn();
+        const response = await withAppleCancel(() => appleAuthAndroid.signIn());
         if (!response.id_token) throw new Error('No identity token from Apple');
         const provider = new OAuthProvider('apple.com');
         const credential = provider.credential({
@@ -201,10 +206,12 @@ export function useFirebaseAuthNative(
           'Apple sign-in requires getAppleAuth (iOS) or getAppleAuthAndroid config'
         );
       const appleAuth = await cfg.getAppleAuth();
-      const response = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-      });
+      const response = await withAppleCancel(() =>
+        appleAuth.performRequest({
+          requestedOperation: appleAuth.Operation.LOGIN,
+          requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+        })
+      );
       if (!response.identityToken)
         throw new Error('No identity token from Apple');
       const credential = AppleAuthProvider.credential(

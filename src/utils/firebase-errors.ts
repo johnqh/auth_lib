@@ -13,6 +13,7 @@ const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
   'auth/too-many-requests': 'Too many attempts. Please try again later.',
   'auth/network-request-failed': 'Network error. Please check your connection.',
   'auth/popup-closed-by-user': 'Sign in cancelled',
+  'auth/user-cancelled': 'Sign in cancelled',
   'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
   'auth/account-exists-with-different-credential':
     'An account already exists with this email using a different sign-in method.',
@@ -64,4 +65,59 @@ export function formatFirebaseError(error: unknown): string {
 export function isFirebaseAuthError(error: unknown): boolean {
   const code = getFirebaseErrorCode(error);
   return code.startsWith('auth/');
+}
+
+/**
+ * The code a sign-in rejects with when the person closed the provider's own
+ * sheet. Firebase's popup flow reports the same thing as
+ * `auth/popup-closed-by-user`; this is that, for the flows Firebase does not
+ * drive itself (native Google and Apple sheets, the desktop browser flow).
+ */
+export const SIGN_IN_CANCELLED_CODE = 'auth/user-cancelled';
+
+/**
+ * The rejection for a sign-in the person backed out of. A sign-in that
+ * *resolved* instead would read as success to every caller — a form would
+ * close, a flow would carry on — with nobody signed in.
+ */
+export function signInCancelledError(): Error & { code: string } {
+  return Object.assign(new Error('Sign in cancelled'), {
+    code: SIGN_IN_CANCELLED_CODE,
+  });
+}
+
+/** Whether an error means the person backed out rather than something failing. */
+export function isSignInCancelled(error: unknown): boolean {
+  const code = getFirebaseErrorCode(error);
+  return (
+    code === SIGN_IN_CANCELLED_CODE ||
+    code === 'auth/popup-closed-by-user' ||
+    code === 'auth/cancelled-popup-request'
+  );
+}
+
+/*
+  What the Apple modules reject with when the sheet is closed:
+  `appleAuth.Error.CANCELED` on iOS and `appleAuthAndroid.Error.SIGNIN_CANCELLED`
+  on Android (the values `signin/credentials.ts` reads off the modules).
+*/
+const APPLE_CANCEL_CODES = ['1001', 'SIGNIN_CANCELLED'];
+
+/** Runs an Apple sheet, turning its cancel into `signInCancelledError()`. */
+export async function withAppleCancel<T>(
+  request: () => Promise<T>
+): Promise<T> {
+  try {
+    return await request();
+  } catch (error) {
+    const failure = error as { code?: unknown; message?: unknown } | null;
+    const code =
+      typeof failure?.code === 'string'
+        ? failure.code
+        : typeof failure?.message === 'string'
+          ? failure.message
+          : undefined;
+    if (code && APPLE_CANCEL_CODES.includes(code)) throw signInCancelledError();
+    throw error;
+  }
 }

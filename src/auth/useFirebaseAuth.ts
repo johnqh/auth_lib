@@ -22,6 +22,10 @@ import { signInWithGoogleOAuthDesktop } from '../oauth/google';
 import { buildAppleCredential } from '../oauth/credentials';
 import { appleCredential, googleCredential } from '../signin/credentials';
 import {
+  signInCancelledError,
+  withAppleCancel,
+} from '../utils/firebase-errors';
+import {
   createFirebaseJsAuth,
   type FirebaseJsAuthConfig,
   type PersistenceStorage,
@@ -251,7 +255,10 @@ export function useFirebaseAuthJs(
           cfg.webAuth
         );
       }
-      if (credential) await signInWithCredential(auth, credential);
+      // A closed sheet is no credential: reject, so the caller does not
+      // take it for a sign-in.
+      if (!credential) throw signInCancelledError();
+      await signInWithCredential(auth, credential);
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +281,8 @@ export function useFirebaseAuthJs(
               : {}),
           }
         );
-        if (credential) await signInWithCredential(auth, credential);
+        if (!credential) throw signInCancelledError();
+        await signInWithCredential(auth, credential);
       } finally {
         setIsLoading(false);
       }
@@ -285,10 +293,12 @@ export function useFirebaseAuthJs(
     setIsLoading(true);
     try {
       const appleAuth = await cfg.getAppleAuth();
-      const response = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-      });
+      const response = await withAppleCancel(() =>
+        appleAuth.performRequest({
+          requestedOperation: appleAuth.Operation.LOGIN,
+          requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+        })
+      );
       if (!response.identityToken)
         throw new Error('No identity token from Apple');
       const credential = buildAppleCredential({

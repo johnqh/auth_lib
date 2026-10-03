@@ -4,6 +4,10 @@ import {
   getFirebaseErrorCode,
   getFirebaseErrorMessage,
   isFirebaseAuthError,
+  isSignInCancelled,
+  signInCancelledError,
+  SIGN_IN_CANCELLED_CODE,
+  withAppleCancel,
 } from './firebase-errors';
 
 describe('getFirebaseErrorMessage', () => {
@@ -180,5 +184,41 @@ describe('isFirebaseAuthError', () => {
 
   it('returns false for undefined', () => {
     expect(isFirebaseAuthError(undefined)).toBe(false);
+  });
+});
+
+describe('sign-in cancelled', () => {
+  it('rejects with a code every sign-in form treats as backing out', () => {
+    const error = signInCancelledError();
+    expect(error.code).toBe(SIGN_IN_CANCELLED_CODE);
+    expect(SIGN_IN_CANCELLED_CODE).toBe('auth/user-cancelled');
+    expect(isSignInCancelled(error)).toBe(true);
+    expect(formatFirebaseError(error)).toBe('Sign in cancelled');
+  });
+
+  it('counts the popup flow’s own cancels, and nothing else', () => {
+    expect(isSignInCancelled({ code: 'auth/popup-closed-by-user' })).toBe(true);
+    expect(isSignInCancelled({ code: 'auth/wrong-password' })).toBe(false);
+    expect(isSignInCancelled(new Error('boom'))).toBe(false);
+  });
+
+  it('turns a closed Apple sheet into that rejection, on either platform', async () => {
+    for (const code of ['1001', 'SIGNIN_CANCELLED']) {
+      await expect(
+        withAppleCancel(() => Promise.reject({ code }))
+      ).rejects.toMatchObject({ code: SIGN_IN_CANCELLED_CODE });
+    }
+    // Some versions put the code in the message.
+    await expect(
+      withAppleCancel(() => Promise.reject(new Error('1001')))
+    ).rejects.toMatchObject({ code: SIGN_IN_CANCELLED_CODE });
+  });
+
+  it('passes any other Apple failure, and any result, through', async () => {
+    const failure = { code: '1000' };
+    await expect(withAppleCancel(() => Promise.reject(failure))).rejects.toBe(
+      failure
+    );
+    await expect(withAppleCancel(async () => 'token')).resolves.toBe('token');
   });
 });
